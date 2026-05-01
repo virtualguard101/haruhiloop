@@ -17,7 +17,10 @@ def _new_run_id() -> str:
     return uuid.uuid4().hex[:8]
 
 
-@app.command("start")
+@app.command(
+    "start",
+    help="Start a new time-loop run and print the initial state panel.",
+)
 def start(run_id: str | None = typer.Option(None, help="Optional run id.")) -> None:
     rid = run_id or _new_run_id()
     state = engine.create_new_state(rid)
@@ -26,7 +29,10 @@ def start(run_id: str | None = typer.Option(None, help="Optional run id.")) -> N
     typer.echo(f"Started run: {rid}")
 
 
-@app.command("step")
+@app.command(
+    "step",
+    help="Advance one timeslot by applying a chosen action to an existing run.",
+)
 def step(
     run_id: str = typer.Option(..., help="Run id."),
     action: str = typer.Option(..., "--action", "-a", help="Action id to apply."),
@@ -50,7 +56,10 @@ def step(
     view.render_state(result.state, engine.available_actions(result.state))
 
 
-@app.command("status")
+@app.command(
+    "status",
+    help="Show the latest state snapshot and available actions for a run.",
+)
 def status(run_id: str = typer.Option(..., help="Run id.")) -> None:
     try:
         state = storage.load_state(run_id)
@@ -60,7 +69,10 @@ def status(run_id: str = typer.Option(..., help="Run id.")) -> None:
     view.render_state(state, engine.available_actions(state))
 
 
-@app.command("history")
+@app.command(
+    "history",
+    help="Inspect step-by-step decision history from history.jsonl.",
+)
 def history(
     run_id: str = typer.Option(..., help="Run id."),
     last: int | None = typer.Option(None, help="Only show last N records."),
@@ -74,7 +86,10 @@ def history(
     view.render_history(records, last=last)
 
 
-@app.command("replay")
+@app.command(
+    "replay",
+    help="Replay a run timeline and summarize why it succeeded or failed.",
+)
 def replay(run_id: str = typer.Option(..., help="Run id.")) -> None:
     try:
         state = storage.load_state(run_id)
@@ -85,7 +100,10 @@ def replay(run_id: str = typer.Option(..., help="Run id.")) -> None:
     view.render_replay(run_id, state, records)
 
 
-@app.command("simulate")
+@app.command(
+    "simulate",
+    help="Run many auto-play sessions with a policy to estimate ending distribution.",
+)
 def simulate(
     runs: int = typer.Option(50, help="Number of simulation runs."),
     max_steps: int = typer.Option(30, help="Max steps per run."),

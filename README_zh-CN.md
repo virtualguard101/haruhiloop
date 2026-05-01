@@ -69,6 +69,79 @@ uv run haruhi history --run-id a1b2c3d4 --last 10
 uv run haruhi replay --run-id a1b2c3d4
 ```
 
+## 命令详解
+
+### `start`
+
+创建新 run，并输出：
+
+- 当前状态面板
+- 可用动作列表
+- 生成的 `run_id`
+
+示例：
+
+```bash
+uv run haruhi start
+uv run haruhi start --run-id demo001
+```
+
+### `step`
+
+对已有 run 推进一个时段（`morning -> afternoon -> evening`）。
+该命令会依次执行：
+
+1. 应用动作增量
+2. 应用触发事件增量
+3. 判定结局
+4. 推进时间
+
+必填参数：
+
+- `--run-id`：目标 run
+- `--action`：动作 ID（从动作列表中选择）
+
+示例：
+
+```bash
+uv run haruhi step --run-id a1b2c3d4 --action collect_clue
+```
+
+### `status`
+
+查看 run 的最新持久化状态，包括关键指标、flags 和当前动作列表。
+
+示例：
+
+```bash
+uv run haruhi status --run-id a1b2c3d4
+```
+
+### `history`
+
+读取 `history.jsonl` 并展示简要步骤日志。
+
+可选参数：
+
+- `--last N`：仅查看最近 N 步
+
+示例：
+
+```bash
+uv run haruhi history --run-id a1b2c3d4
+uv run haruhi history --run-id a1b2c3d4 --last 8
+```
+
+### `replay`
+
+回放完整轨迹，并给出成功/失败趋势总结。
+
+示例：
+
+```bash
+uv run haruhi replay --run-id a1b2c3d4
+```
+
 可选模拟：
 
 ```bash
@@ -76,6 +149,30 @@ uv run haruhi simulate --runs 100 --max-steps 30 --policy greedy
 ```
 
 可用来比较不同策略倾向（例如“保稳定优先”与“冲线索优先”）及结局分布。
+
+### `simulate`
+
+批量自动运行，不影响你的手动 run。
+
+主要参数：
+
+- `--runs`：模拟局数
+- `--max-steps`：每局最大步数
+- `--policy`：`random` 或 `greedy`
+
+示例：
+
+```bash
+uv run haruhi simulate --runs 200 --max-steps 40 --policy random
+```
+
+## CLI 帮助提示
+
+```bash
+uv run haruhi --help
+uv run haruhi step --help
+uv run haruhi simulate --help
+```
 
 ## Actions
 

@@ -69,6 +69,79 @@ uv run haruhi history --run-id a1b2c3d4 --last 10
 uv run haruhi replay --run-id a1b2c3d4
 ```
 
+## Command reference
+
+### `start`
+
+Create a new run with deterministic initial values and print:
+
+- current state metrics
+- all available actions
+- generated `run_id`
+
+Examples:
+
+```bash
+uv run haruhi start
+uv run haruhi start --run-id demo001
+```
+
+### `step`
+
+Advance exactly one timeslot (`morning -> afternoon -> evening`) for an existing run.
+This command applies:
+
+1. action deltas
+2. triggered event deltas
+3. ending checks
+4. time advancement
+
+Required options:
+
+- `--run-id`: target run
+- `--action`: action id (one of the action list)
+
+Example:
+
+```bash
+uv run haruhi step --run-id a1b2c3d4 --action collect_clue
+```
+
+### `status`
+
+Show the latest persisted state for a run, including key metrics, flags, and current action list.
+
+Example:
+
+```bash
+uv run haruhi status --run-id a1b2c3d4
+```
+
+### `history`
+
+Read `history.jsonl` and display compact step logs.
+
+Optional:
+
+- `--last N`: only show the latest N steps
+
+Examples:
+
+```bash
+uv run haruhi history --run-id a1b2c3d4
+uv run haruhi history --run-id a1b2c3d4 --last 8
+```
+
+### `replay`
+
+Replay the full run timeline and print a high-level summary of success/failure trend.
+
+Example:
+
+```bash
+uv run haruhi replay --run-id a1b2c3d4
+```
+
 Optional simulation:
 
 ```bash
@@ -76,6 +149,30 @@ uv run haruhi simulate --runs 100 --max-steps 30 --policy greedy
 ```
 
 Use simulation to compare strategy tendencies (for example, safety-first vs clue-first) and estimate ending distribution.
+
+### `simulate`
+
+Batch-run auto-play sessions without touching your manual runs.
+
+Key options:
+
+- `--runs`: number of simulation runs
+- `--max-steps`: per-run step limit
+- `--policy`: `random` or `greedy`
+
+Example:
+
+```bash
+uv run haruhi simulate --runs 200 --max-steps 40 --policy random
+```
+
+## CLI help tips
+
+```bash
+uv run haruhi --help
+uv run haruhi step --help
+uv run haruhi simulate --help
+```
 
 ## Actions
 
