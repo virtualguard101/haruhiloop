@@ -2,6 +2,55 @@
 
 Endless Eight inspired time-loop simulator CLI.
 
+## Story-driven gameplay
+
+This prototype turns key motifs from *The Melancholy of Haruhi Suzumiya* into a deterministic loop simulation:
+
+- **Endless Eight loop pressure**: each cycle repeats a summer day split into `morning`, `afternoon`, and `evening`.
+- **Haruhi's emotional influence**: `satisfaction` models Haruhi's mood. If boredom accumulates, reality becomes unstable.
+- **Closed Space escalation**: low `stability` can trigger a Closed Space event, mirroring the series where emotional imbalance distorts the world.
+- **Kyon-style subtle intervention**: you break the loop through small, cumulative choices (collecting clues, coordinating the group, and resolving unfinished tasks).
+- **Alternative worldlines**: your trajectory can end in a successful new worldline, a clean loop break, or a collapse scenario where giant entities emerge.
+
+Think of each command as “directing one episode turn” of the loop and each action as one intervention in the SOS Brigade timeline.
+
+## Gameplay model
+
+Each run tracks:
+
+- `loop_count`: how many full day loops have occurred
+- `satisfaction`: Haruhi's current mood level
+- `stability`: worldline stability (risk of Closed Space)
+- `clue_points`: how much evidence/preparation has accumulated
+- `flags`: narrative milestones (for ending conditions)
+
+The simulation is intentionally deterministic:
+
+- same initial state + same action sequence = same outcome
+- this supports replayability, balancing, and debugging
+
+## Action narrative mapping
+
+- `attend_class`: routine school day, low risk but little progress
+- `club_activity`: SOS Brigade routine, can entertain Haruhi but may not solve the root cause
+- `observe_anomaly`: investigate loop inconsistencies and hidden signs
+- `collect_clue`: consolidate discoveries into actionable knowledge
+- `plan_festival`: create meaningful novelty to counter boredom
+- `complete_homework`: explicit nod to the Endless Eight trigger of unresolved summer tasks
+- `share_truth`: synchronize team understanding of the loop
+- `calm_haruhi`: emergency stabilization when instability is rising
+
+## Endings and their narrative meaning
+
+- `haruhi_happy_new_world`  
+  Haruhi is satisfied and the group resolves key constraints, opening a healthier worldline.
+
+- `kyon_breaks_loop`  
+  The team accumulates enough subtle changes to finally escape repetition.
+
+- `shinirappears_unstable_world`  
+  Emotional and stability collapse leads to severe Closed Space consequences.
+
 ## Quick start (uv)
 
 ```bash
@@ -25,6 +74,8 @@ Optional simulation:
 ```bash
 uv run haruhi simulate --runs 100 --max-steps 30 --policy greedy
 ```
+
+Use simulation to compare strategy tendencies (for example, safety-first vs clue-first) and estimate ending distribution.
 
 ## Actions
 
