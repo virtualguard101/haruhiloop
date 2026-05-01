@@ -1,6 +1,6 @@
 # Haruhi Loop CLI
 
-Endless Eight inspired time-loop simulator CLI.
+Inspired by the "Endless August" motif from *The Melancholy of Haruhi Suzumiya*, this CLI simulates a time-loop scenario where the main character, Haruhi Suzumiya, repeatedly experiences the same day. The simulation is deterministic in `v0` version, meaning that the same initial state and action sequence will always produce the same outcome.
 
 ## Story-driven gameplay
 
