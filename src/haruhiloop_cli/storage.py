@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from haruhi_cli.models import GameState, StepRecord
+from haruhiloop_cli.models import GameState, StepRecord
 
-DATA_DIRNAME = ".haruhi_runs"
+DATA_DIRNAME = ".haruhiloop_runs"
 
 
 def data_dir(base_dir: Path | None = None) -> Path:

@@ -1,4 +1,4 @@
-from haruhi_cli.engine import GameEngine
+from haruhiloop_cli.engine import GameEngine
 
 
 def test_ending_haruhi_happy_new_world():

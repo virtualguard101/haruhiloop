@@ -4,7 +4,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from haruhi_cli.models import Action, GameState, StepRecord
+from haruhiloop_cli.models import Action, GameState, StepRecord
 
 console = Console()
 

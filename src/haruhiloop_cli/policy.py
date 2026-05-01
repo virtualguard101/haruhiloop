@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from typing import Protocol
 
-from haruhi_cli.models import Action, GameState, StepRecord
+from haruhiloop_cli.models import Action, GameState, StepRecord
 
 
 class Policy(Protocol):

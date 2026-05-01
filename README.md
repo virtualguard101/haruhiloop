@@ -1,6 +1,14 @@
+<div align="center">
+
 # Haruhi Loop CLI
 
+[English](README.md)
+[简体中文](README_zh-CN.md)
+
+</div>
+
 Inspired by the "Endless August" motif from *The Melancholy of Haruhi Suzumiya*, this CLI simulates a time-loop scenario where the main character, Haruhi Suzumiya, repeatedly experiences the same day. The simulation is deterministic in `v0` version, meaning that the same initial state and action sequence will always produce the same outcome.
+
 
 ## Story-driven gameplay
 

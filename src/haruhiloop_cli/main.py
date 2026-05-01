@@ -5,9 +5,9 @@ from collections import Counter
 
 import typer
 
-from haruhi_cli.engine import GameEngine
-from haruhi_cli.policy import create_policy
-from haruhi_cli import storage, view
+from haruhiloop_cli.engine import GameEngine
+from haruhiloop_cli.policy import create_policy
+from haruhiloop_cli import storage, view
 
 app = typer.Typer(no_args_is_help=True, help="Haruhi Endless Eight time-loop simulator.")
 engine = GameEngine()

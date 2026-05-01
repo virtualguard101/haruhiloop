@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from haruhi_cli.models import Action, Ending, EventOutcome, GameState
+from haruhiloop_cli.models import Action, Ending, EventOutcome, GameState
 
 # Table-driven action definitions keep content extensible.
 ACTIONS: dict[str, Action] = {

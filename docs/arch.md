@@ -1,5 +1,8 @@
 # Haruhi Loop CLI Architecture
 
+[English](arch.md)
+[简体中文](arch_zh-CN.md)
+
 ## 1. Goals
 
 This project is a `Python + CLI` prototype built for fun. The design priorities are:

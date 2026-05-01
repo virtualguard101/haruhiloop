@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from haruhi_cli.models import Action, Ending, GameState, StepRecord, TIMESLOTS, clamp
-from haruhi_cli import rules
+from haruhiloop_cli.models import Action, Ending, GameState, StepRecord, TIMESLOTS, clamp
+from haruhiloop_cli import rules
 
 
 @dataclass(slots=True)
