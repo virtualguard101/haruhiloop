@@ -33,8 +33,13 @@ EVENT_NAMES_ZH: dict[str, str] = {
     "boredom_spike": "重复日常引发的厌倦",
     "day_end_drift": "一日将尽的摩擦余波",
     "restless_search": "低落情绪下的可疑绕行",
-    "closed_space": "闭锁空间",
-    "closed_space_stabilized": "协同应对稳定局势",
+    "sync_without_alignment": "协同不足导致同步失效",
+    "homework_progress": "作业进度推进",
+    "homework_completed": "作业全部完成",
+    "homework_pressure": "作业压力累积",
+    "homework_already_done": "作业复盘余量",
+    "closed_space_stage": "闭锁空间危机阶段",
+    "closed_space_countermeasure": "闭锁空间应对",
     "hope_signal": "希望信号",
 }
 

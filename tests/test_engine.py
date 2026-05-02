@@ -35,7 +35,7 @@ def test_closed_space_event_triggers_when_stability_low():
     state.stability = 34
     result = engine.step(state, "观察异常", 1)
 
-    assert state.closed_space_count >= 1
+    assert state.closed_space_stage >= 1
     assert any("闭锁空间" in event for event in result.events)
 
 
@@ -43,3 +43,20 @@ def test_resolve_action_ref_index_and_chinese_name():
     assert rules.resolve_action_ref("3") == "观察异常"
     assert rules.resolve_action_ref(" 3 ") == "观察异常"
     assert rules.resolve_action_ref("观察异常") == "观察异常"
+
+
+def test_homework_becomes_flag_after_task_chain():
+    engine = GameEngine()
+    state = engine.create_new_state("homework-chain")
+    for step in range(1, 4):
+        engine.step(state, "完成暑假作业", step)
+    assert state.homework_progress == 3
+    assert "homework_done" in state.flags
+
+
+def test_mutation_profile_is_recorded():
+    engine = GameEngine()
+    state = engine.create_new_state("profile-record", mutator_mode="ai", random_seed=7)
+    result = engine.step(state, "观察异常", 1)
+    assert result.record.mutation_profile is not None
+    assert "satisfaction_factor" in result.record.mutation_profile

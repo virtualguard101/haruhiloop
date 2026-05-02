@@ -34,6 +34,11 @@
 - `stability`：世界线稳定度（决定闭锁空间风险）
 - `clue_points`：线索和准备度累计值
 - `flags`：叙事里程碑标记（用于结局判定）
+- `homework_progress`：作业任务链进度（0–3，达标后写入 `homework_done`）
+- `crew_sync`：SOS 团协同值（影响“同步循环真相”等关键动作收益）
+- `closed_space_stage`：闭锁空间危机阶段（0–3）
+- `memory_residue`：循环记忆残留（线索效率与协同恢复的缓慢增益）
+- `worldline_mutation_profile`：世界线扰动系数（v0.4，可切换 deterministic / ai）
 
 本模拟器默认采用确定性机制：
 
@@ -79,6 +84,7 @@ uv run haruhi start
 ```bash
 uv run haruhi start
 uv run haruhi start RUN          # 可选：自定运行标识
+uv run haruhi start --mutator-mode ai --seed 42 --ai-temperature 0.9
 
 uv run haruhi step RUN 3         # 推进：第二参数为序号 1–8
 uv run haruhi step RUN 观察异常   # 或与面板一致的中文动作名
@@ -87,6 +93,7 @@ uv run haruhi status RUN
 uv run haruhi history RUN --last 10
 uv run haruhi replay RUN
 uv run haruhi simulate --runs 100 --max-steps 30 --policy greedy
+uv run haruhi simulate --runs 100 --policy random --mutator-mode ai --seed 7
 ```
 
 ## 命令详解
@@ -120,7 +127,7 @@ uv run haruhi simulate --runs 100 --max-steps 30 --policy greedy
 
 ### `simulate`
 
-批量自动局，不写入手动存档；参数 `--runs`、`--max-steps`、`--policy`（`random` 或 `greedy`）。
+批量自动局，不写入手动存档；参数 `--runs`、`--max-steps`、`--policy`（`random` 或 `greedy`），并支持 `--mutator-mode`、`--seed`、`--ai-temperature`。
 
 ## CLI 帮助
 
@@ -132,7 +139,7 @@ uv run haruhi simulate --help
 
 ## 存档位置
 
-默认在项目运行时的当前目录下：`.haruhi_runs/<run_id>/`，内含 `state.json` 与 `history.jsonl`。
+默认在项目运行时的当前目录下：`.haruhiloop_runs/<run_id>/`，内含 `state.json` 与 `history.jsonl`。
 
 ## 运行测试
 

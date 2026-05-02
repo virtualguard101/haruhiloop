@@ -40,7 +40,18 @@ def render_state(state: GameState, actions: list[Action]) -> None:
     table.add_row("春日满意度", str(state.satisfaction))
     table.add_row("世界稳定度", str(state.stability))
     table.add_row("线索点数", str(state.clue_points))
+    table.add_row("作业进度", f"{state.homework_progress}/3")
+    if state.homework_parts_done:
+        table.add_row("作业环节", ", ".join(state.homework_parts_done))
+    table.add_row("团员协同", str(state.crew_sync))
     table.add_row("闭锁空间次数", str(state.closed_space_count))
+    table.add_row("闭锁空间阶段", str(state.closed_space_stage))
+    residue = state.memory_residue
+    table.add_row(
+        "记忆残留",
+        f"索效+{residue.get('clue_efficiency', 0)} / 协同恢复+{residue.get('sync_recovery', 0)}",
+    )
+    table.add_row("扰动模式", state.mutator_mode)
     table.add_row("世界线偏移", str(state.worldline_shift))
     if state.flags:
         table.add_row("叙事标记", i18n.format_flags(state.flags))
@@ -48,6 +59,14 @@ def render_state(state: GameState, actions: list[Action]) -> None:
         etitle = state.ending_title or ""
         table.add_row("结局", f"{state.ending_id}（{etitle}）")
     console.print(table)
+    if state.closed_space_stage > 0:
+        console.print(
+            Panel(
+                "闭锁空间处于活跃阶段：优先尝试「安抚春日」或「同步循环真相」以压制扩张。",
+                title="危机提示",
+                border_style="red",
+            )
+        )
 
     action_table = Table(title="可用动作（step 时第二参数可填序号或下列中文名）")
     action_table.add_column("序号", justify="right")
@@ -71,6 +90,14 @@ def render_step(record: StepRecord) -> None:
         f"变化 | 世界稳定度：{record.before['stability']} → {record.after['stability']}",
         f"变化 | 线索点数：{record.before['clue_points']} → {record.after['clue_points']}",
     ]
+    if record.mutation_profile:
+        profile = record.mutation_profile
+        lines.append(
+            "扰动系数 | "
+            f"情绪x{profile.get('satisfaction_factor', 1.0):.2f} "
+            f"稳定x{profile.get('stability_factor', 1.0):.2f} "
+            f"线索x{profile.get('clue_factor', 1.0):.2f}"
+        )
     if record.events:
         lines.append("触发事件：")
         lines.extend(f"· {item}" for item in record.events)

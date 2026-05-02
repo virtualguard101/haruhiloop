@@ -6,6 +6,7 @@ def test_ending_haruhi_happy_new_world():
     state = engine.create_new_state("ending-happy")
     state.satisfaction = 84
     state.clue_points = 10
+    state.crew_sync = 65
     state.flags.update({"festival_plan", "homework_done", "truth_shared"})
 
     result = engine.step(state, "安抚春日", 1)
@@ -19,6 +20,7 @@ def test_ending_kyon_breaks_loop():
     state = engine.create_new_state("ending-break")
     state.clue_points = 11
     state.stability = 50
+    state.crew_sync = 56
     state.flags.update({"anomaly_seen", "homework_done", "truth_shared"})
 
     result = engine.step(state, "观察异常", 1)

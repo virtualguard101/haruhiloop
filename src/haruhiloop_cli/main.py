@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from collections import Counter
+import random
 
 import typer
 
@@ -27,9 +28,27 @@ def _new_run_id() -> str:
 )
 def start(
     run_id: str | None = typer.Argument(None, help="可选；省略则随机生成运行标识。"),
+    mutator_mode: str = typer.Option(
+        "deterministic",
+        "--mutator-mode",
+        help="世界线扰动模式：deterministic（确定性）或 ai（受控非确定性）。",
+    ),
+    seed: int | None = typer.Option(None, "--seed", help="随机种子（用于复现实验）。"),
+    ai_temperature: float = typer.Option(0.7, "--ai-temperature", help="AI 扰动温度（0.0-1.5）。"),
 ) -> None:
+    if mutator_mode not in {"deterministic", "ai"}:
+        typer.secho("mutator-mode 仅支持 deterministic 或 ai", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
+    if ai_temperature < 0 or ai_temperature > 1.5:
+        typer.secho("ai-temperature 必须在 0.0 到 1.5 之间", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
     rid = run_id or _new_run_id()
-    state = engine.create_new_state(rid)
+    state = engine.create_new_state(
+        rid,
+        mutator_mode=mutator_mode,
+        random_seed=seed,
+        ai_temperature=ai_temperature,
+    )
     storage.save_state(state)
     view.render_start_intro()
     view.render_state(state, engine.available_actions(state))
@@ -129,9 +148,22 @@ def simulate(
         "--policy",
         help="策略名称：random（随机）或 greedy（贪心）。",
     ),
+    mutator_mode: str = typer.Option(
+        "deterministic",
+        "--mutator-mode",
+        help="世界线扰动模式：deterministic 或 ai。",
+    ),
+    seed: int | None = typer.Option(None, "--seed", help="随机种子（用于复现实验）。"),
+    ai_temperature: float = typer.Option(0.7, "--ai-temperature", help="AI 扰动温度（0.0-1.5）。"),
 ) -> None:
     if runs <= 0:
         typer.secho("模拟局数必须大于 0", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
+    if mutator_mode not in {"deterministic", "ai"}:
+        typer.secho("mutator-mode 仅支持 deterministic 或 ai", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
+    if ai_temperature < 0 or ai_temperature > 1.5:
+        typer.secho("ai-temperature 必须在 0.0 到 1.5 之间", fg=typer.colors.RED)
         raise typer.Exit(code=1)
 
     try:
@@ -139,11 +171,19 @@ def simulate(
     except ValueError as exc:
         typer.secho(str(exc), fg=typer.colors.RED)
         raise typer.Exit(code=1) from exc
+    if policy_name == "random" and seed is not None:
+        random.seed(seed)
 
     endings = Counter()
     unresolved = 0
     for index in range(runs):
-        state = engine.create_new_state(f"sim-{index}")
+        run_seed = None if seed is None else seed + index
+        state = engine.create_new_state(
+            f"sim-{index}",
+            mutator_mode=mutator_mode,
+            random_seed=run_seed,
+            ai_temperature=ai_temperature,
+        )
         records = []
         for step_number in range(1, max_steps + 1):
             action = policy.choose_action(state, engine.available_actions(state), records)

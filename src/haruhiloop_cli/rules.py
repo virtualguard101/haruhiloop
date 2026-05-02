@@ -48,7 +48,6 @@ ACTIONS: dict[str, Action] = {
         description="写完暑期作业，消解悬而未决的遗憾。",
         delta_satisfaction=2,
         delta_stability=4,
-        add_flags=("homework_done",),
     ),
     "同步循环真相": Action(
         action_id="同步循环真相",
@@ -121,31 +120,21 @@ def evaluate_events(state: GameState, action: Action) -> list[EventOutcome]:
             )
         )
 
-    if state.stability <= 35:
+    if action.action_id == "同步循环真相" and state.crew_sync < 55:
         outcomes.append(
             EventOutcome(
-                event_id="closed_space",
-                description="闭锁空间显现，现实结构开始动摇。",
-                delta_stability=-8,
-                delta_satisfaction=-4,
-                add_flags=("closed_space_active",),
+                event_id="sync_without_alignment",
+                description="团员协同不足，同步真相并未形成稳定合力。",
+                delta_stability=-2,
+                delta_satisfaction=-1,
             )
         )
-        if action.action_id in {"安抚春日", "同步循环真相"}:
-            outcomes.append(
-                EventOutcome(
-                    event_id="closed_space_stabilized",
-                    description="众人默契配合，暂时压住了崩坏。",
-                    delta_stability=8,
-                    delta_satisfaction=3,
-                    add_flags=("closed_space_resolved",),
-                )
-            )
 
     if (
         action.action_id == "策划惊喜活动"
         and "homework_done" in state.flags
         and "truth_shared" in state.flags
+        and state.crew_sync >= 60
     ):
         outcomes.append(
             EventOutcome(
@@ -166,6 +155,7 @@ def evaluate_ending(state: GameState) -> Ending | None:
         state.satisfaction >= 85
         and state.clue_points >= 10
         and {"festival_plan", "homework_done", "truth_shared"}.issubset(state.flags)
+        and state.crew_sync >= 65
     ):
         return Ending(
             ending_id="haruhi_happy_new_world",
@@ -177,6 +167,7 @@ def evaluate_ending(state: GameState) -> Ending | None:
         state.clue_points >= 12
         and {"anomaly_seen", "homework_done", "truth_shared"}.issubset(state.flags)
         and state.stability >= 45
+        and state.crew_sync >= 55
     ):
         return Ending(
             ending_id="kyon_breaks_loop",
@@ -184,7 +175,11 @@ def evaluate_ending(state: GameState) -> Ending | None:
             description="细小改变的累积终于对齐，循环被切开。",
         )
 
-    if state.stability <= 0 or (state.satisfaction <= 5 and state.closed_space_count >= 2):
+    if (
+        state.stability <= 0
+        or state.closed_space_stage >= 3
+        or (state.satisfaction <= 5 and state.closed_space_count >= 2)
+    ):
         return Ending(
             ending_id="shinirappears_unstable_world",
             title="神人于闭锁中出现",

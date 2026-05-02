@@ -1,4 +1,4 @@
-# Haruhi Loop CLI 新人引导（v0）
+# Haruhi Loop CLI 新人引导
 
 这是一份面向第一次接触本项目的快速上手文档。跟着命令执行一遍，你就能完成一局的基本推进、查看历史并理解存档结构。
 
@@ -29,6 +29,12 @@ uv run haruhi start
 3. 一行运行标识，例如：`已开始运行：a1b2c3d4`
 
 请记下这个运行标识，后续命令都需要它。下文以 `RUN` 代称。
+
+如果你想体验 AI 扰动模式（v0.4）：
+
+```bash
+uv run haruhi start --mutator-mode ai --seed 42 --ai-temperature 0.9
+```
 
 ## 3) 推进一步剧情
 
@@ -85,6 +91,9 @@ uv run haruhi simulate --runs 100 --max-steps 30 --policy greedy
 
 - `--policy random`：随机策略
 - `--policy greedy`：贪心策略（默认）
+- `--mutator-mode deterministic|ai`：世界线扰动模式
+- `--seed`：固定随机种子用于复现实验
+- `--ai-temperature`：AI 扰动波动强度
 
 ## 7) 存档在什么位置
 

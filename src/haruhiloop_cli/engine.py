@@ -4,6 +4,11 @@ from dataclasses import dataclass
 
 from haruhiloop_cli.models import Action, Ending, GameState, StepRecord, TIMESLOTS, clamp
 from haruhiloop_cli import i18n, rules
+from haruhiloop_cli.mutator import build_mutator, validate_profile
+from haruhiloop_cli.systems.closed_space import evaluate_closed_space_stage
+from haruhiloop_cli.systems.crew import apply_crew_sync
+from haruhiloop_cli.systems.homework import apply_homework_progress, maybe_trigger_homework_pressure
+from haruhiloop_cli.systems.memory import apply_memory_residue, apply_residue_decay, inject_residue_bonus
 
 
 @dataclass(slots=True)
@@ -16,8 +21,22 @@ class StepResult:
 
 
 class GameEngine:
-    def create_new_state(self, run_id: str) -> GameState:
-        return GameState(run_id=run_id)
+    def create_new_state(
+        self,
+        run_id: str,
+        *,
+        mutator_mode: str = "deterministic",
+        random_seed: int | None = None,
+        ai_temperature: float = 0.7,
+    ) -> GameState:
+        state = GameState(
+            run_id=run_id,
+            mutator_mode=mutator_mode,
+            random_seed=random_seed,
+            ai_temperature=ai_temperature,
+        )
+        state.worldline_mutation_profile = self._compute_profile(state)
+        return state
 
     def available_actions(self, state: GameState) -> list[Action]:
         return rules.get_available_actions(state)
@@ -31,16 +50,28 @@ class GameEngine:
             raise ValueError(f"未知动作：{action_id}")
 
         before = state.snapshot()
-        state.satisfaction = clamp(state.satisfaction + action.delta_satisfaction)
-        state.stability = clamp(state.stability + action.delta_stability)
-        state.clue_points = clamp(state.clue_points + action.delta_clue_points)
+        profile = state.worldline_mutation_profile or self._compute_profile(state)
+        sat_factor = profile.get("satisfaction_factor", 1.0)
+        stab_factor = profile.get("stability_factor", 1.0)
+        clue_factor = profile.get("clue_factor", 1.0)
+
+        state.satisfaction = clamp(state.satisfaction + round(action.delta_satisfaction * sat_factor))
+        state.stability = clamp(state.stability + round(action.delta_stability * stab_factor))
+        state.clue_points = clamp(state.clue_points + round(action.delta_clue_points * clue_factor))
         state.flags.update(action.add_flags)
         self._update_streak(state, action_id)
         state.recent_actions.append(action_id)
         state.recent_actions = state.recent_actions[-8:]
         state.worldline_shift += abs(action.delta_satisfaction) + abs(action.delta_clue_points)
 
-        triggered = rules.evaluate_events(state, action)
+        triggered = []
+        triggered.extend(apply_homework_progress(state, action_id))
+        triggered.extend(apply_crew_sync(state, action_id))
+        triggered.extend(rules.evaluate_events(state, action))
+        triggered.extend(evaluate_closed_space_stage(state, action_id))
+        triggered.extend(maybe_trigger_homework_pressure(state))
+
+        inject_residue_bonus(state)
         event_labels: list[str] = []
         for event in triggered:
             state.satisfaction = clamp(state.satisfaction + event.delta_satisfaction)
@@ -48,9 +79,6 @@ class GameEngine:
             state.clue_points = clamp(state.clue_points + event.delta_clue_points)
             state.flags.update(event.add_flags)
             event_labels.append(i18n.format_event_line(event))
-            if event.event_id == "closed_space":
-                state.closed_space_count += 1
-                state.worldline_shift += 3
 
         ending = rules.evaluate_ending(state)
         if ending is not None:
@@ -68,9 +96,26 @@ class GameEngine:
             before=before,
             after=state.snapshot(),
             events=event_labels,
+            mutation_profile=dict(profile),
             ending_id=state.ending_id,
         )
         return StepResult(state=state, record=record, action=action, events=event_labels, ending=ending)
+
+    def _compute_profile(self, state: GameState) -> dict[str, float]:
+        seed = state.random_seed
+        if state.mutator_mode == "ai" and seed is not None:
+            seed = seed + state.day * 97 + state.loop_count * 193
+        mutator = build_mutator(
+            state.mutator_mode,
+            seed=seed,
+            temperature=state.ai_temperature,
+        )
+        try:
+            raw_profile = mutator.mutate(state)
+            return validate_profile(raw_profile)
+        except Exception:
+            fallback = build_mutator("deterministic")
+            return validate_profile(fallback.mutate(state))
 
     @staticmethod
     def _update_streak(state: GameState, action_id: str) -> None:
@@ -80,14 +125,16 @@ class GameEngine:
             state.current_action_streak = 0
         state.previous_action = action_id
 
-    @staticmethod
-    def _advance_time(state: GameState) -> None:
+    def _advance_time(self, state: GameState) -> None:
         if state.timeslot_index == len(TIMESLOTS) - 1:
+            apply_memory_residue(state)
             state.timeslot_index = 0
             state.day += 1
             state.loop_count += 1
             # Slow drift emphasizes infinite-loop pressure.
             state.satisfaction = clamp(state.satisfaction - 1)
             state.stability = clamp(state.stability - 1)
+            apply_residue_decay(state)
+            state.worldline_mutation_profile = self._compute_profile(state)
         else:
             state.timeslot_index += 1
