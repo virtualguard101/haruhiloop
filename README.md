@@ -47,7 +47,7 @@ uv run haruhi start
 uv run haruhi start RUN              # optional custom id
 
 uv run haruhi step RUN 3             # second arg: index 1–8
-uv run haruhi step RUN 观察异常       # or full Chinese action id
+uv run haruhi step RUN 向长门核对异常   # or full Chinese action id
 
 uv run haruhi status RUN
 uv run haruhi history RUN --last 10

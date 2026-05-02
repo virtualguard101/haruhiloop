@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from haruhiloop_cli.models import Action, Ending, GameState, StepRecord, TIMESLOTS, clamp
+from haruhiloop_cli.models import Action, Ending, GameState, StepRecord, clamp
 from haruhiloop_cli import i18n, rules
 
 
@@ -34,6 +34,7 @@ class GameEngine:
         state.satisfaction = clamp(state.satisfaction + action.delta_satisfaction)
         state.stability = clamp(state.stability + action.delta_stability)
         state.clue_points = clamp(state.clue_points + action.delta_clue_points)
+        state.nagato_fatigue = clamp(state.nagato_fatigue + action.delta_nagato_fatigue)
         state.flags.update(action.add_flags)
         self._update_streak(state, action_id)
         state.recent_actions.append(action_id)
@@ -56,6 +57,7 @@ class GameEngine:
         if ending is not None:
             state.ending_id = ending.ending_id
             state.ending_title = ending.title
+            state.ending_epilogue = ending.description
 
         self._advance_time(state)
 
@@ -82,12 +84,9 @@ class GameEngine:
 
     @staticmethod
     def _advance_time(state: GameState) -> None:
-        if state.timeslot_index == len(TIMESLOTS) - 1:
-            state.timeslot_index = 0
-            state.day += 1
-            state.loop_count += 1
-            # Slow drift emphasizes infinite-loop pressure.
-            state.satisfaction = clamp(state.satisfaction - 1)
-            state.stability = clamp(state.stability - 1)
-        else:
-            state.timeslot_index += 1
+        # 一日一步：每步结束即进入下一天，保持 timeslot 恒为「全日」。
+        state.timeslot_index = 0
+        state.day += 1
+        state.loop_count += 1
+        state.satisfaction = clamp(state.satisfaction - 1)
+        state.stability = clamp(state.stability - 1)

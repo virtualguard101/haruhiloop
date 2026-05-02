@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-TIMESLOTS = ("morning", "afternoon", "evening")
+# 一日一步：每步代表一整天的选择与结算，不再分早/午/晚。
+TIMESLOTS = ("day",)
 
 
 def clamp(value: int, low: int = 0, high: int = 100) -> int:
@@ -18,6 +19,7 @@ class Action:
     delta_satisfaction: int = 0
     delta_stability: int = 0
     delta_clue_points: int = 0
+    delta_nagato_fatigue: int = 0
     add_flags: tuple[str, ...] = ()
 
 
@@ -49,8 +51,10 @@ class GameState:
     clue_points: int = 0
     closed_space_count: int = 0
     worldline_shift: int = 0
+    nagato_fatigue: int = 0
     ending_id: str | None = None
     ending_title: str | None = None
+    ending_epilogue: str | None = None
     flags: set[str] = field(default_factory=set)
     recent_actions: list[str] = field(default_factory=list)
     current_action_streak: int = 0
@@ -58,7 +62,8 @@ class GameState:
 
     @property
     def timeslot(self) -> str:
-        return TIMESLOTS[self.timeslot_index]
+        idx = min(self.timeslot_index, len(TIMESLOTS) - 1)
+        return TIMESLOTS[max(0, idx)]
 
     @property
     def is_finished(self) -> bool:
@@ -75,6 +80,10 @@ class GameState:
         parsed = dict(data)
         parsed["flags"] = set(parsed.get("flags", []))
         parsed.pop("timeslot", None)
+        # 旧存档若含多时段索引，统一按「全日」模型对齐。
+        parsed["timeslot_index"] = 0
+        parsed.setdefault("ending_epilogue", None)
+        parsed.setdefault("nagato_fatigue", 0)
         return cls(**parsed)
 
 
