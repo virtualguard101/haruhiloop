@@ -1,0 +1,18 @@
+{
+  "run_id": "20c0adb1",
+  "day": 1,
+  "timeslot_index": 0,
+  "loop_count": 1,
+  "satisfaction": 60,
+  "stability": 70,
+  "clue_points": 0,
+  "closed_space_count": 0,
+  "worldline_shift": 0,
+  "ending_id": null,
+  "ending_title": null,
+  "flags": [],
+  "recent_actions": [],
+  "current_action_streak": 0,
+  "previous_action": null,
+  "timeslot": "morning"
+}

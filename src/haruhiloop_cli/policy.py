@@ -25,17 +25,18 @@ class GreedyPolicy:
         self, state: GameState, actions: list[Action], history: list[StepRecord]
     ) -> str:
         _ = history
+
         def score(action: Action) -> int:
             value = (
                 2 * action.delta_satisfaction
                 + 2 * action.delta_stability
                 + 3 * action.delta_clue_points
             )
-            if state.stability < 40 and action.action_id in {"calm_haruhi", "complete_homework"}:
+            if state.stability < 40 and action.action_id in {"安抚春日", "完成暑假作业"}:
                 value += 8
-            if state.satisfaction < 45 and action.action_id in {"plan_festival", "calm_haruhi"}:
+            if state.satisfaction < 45 and action.action_id in {"策划惊喜活动", "安抚春日"}:
                 value += 8
-            if state.clue_points > 8 and action.action_id == "share_truth":
+            if state.clue_points > 8 and action.action_id == "同步循环真相":
                 value += 6
             return value
 
@@ -48,4 +49,4 @@ def create_policy(policy_name: str) -> Policy:
         return RandomPolicy()
     if policy_name == "greedy":
         return GreedyPolicy()
-    raise ValueError(f"Unknown policy: {policy_name}")
+    raise ValueError(f"未知策略：{policy_name}")
