@@ -1,75 +1,46 @@
-# Haruhi Loop CLI 新人引导
+# Haruhi Loop 新人引导
 
-这是一份面向第一次接触本项目的快速上手文档。跟着命令执行一遍，你就能完成一局的基本推进、查看历史并理解存档结构。
+本文按当前代码实现编写，覆盖 CLI 与 Textual 两种入口。
 
-## 1) 环境准备
-
-在项目根目录执行：
+## 1) 安装依赖
 
 ```bash
 uv sync --extra dev
 ```
 
-如果你暂时没有 `uv`，也可以使用：
+或：
 
 ```bash
 pip install -e ".[dev]"
 ```
 
-## 2) 开始第一局
+## 2) CLI 模式：开一局
 
 ```bash
 uv run haruhi start
 ```
 
-你会看到三部分输出：
-
-1. 开局说明（背景、目标、操作提示）
-2. 状态面板（包含循环次数、情绪值、稳定度、线索等）
-3. 一行运行标识，例如：`已开始运行：a1b2c3d4`
-
-请记下这个运行标识，后续命令都需要它。下文以 `RUN` 代称。
-
-如果你想体验 AI 扰动模式（v0.4）：
+可选参数：
 
 ```bash
 uv run haruhi start --mutator-mode ai --seed 42 --ai-temperature 0.9
 ```
 
-## 3) 推进一步剧情
+你会得到运行标识（`run_id`），后续命令都用它。
 
-有两种写法，都可以：
+## 3) CLI 模式：推进与查看
 
 ```bash
 uv run haruhi step RUN 3
+uv run haruhi step RUN 向长门核对异常
 uv run haruhi step RUN 观察异常
 ```
 
-- 第一种：使用面板中的动作序号（1–8）
-- 第二种：使用完整中文动作名
+- 支持序号 `1-8`
+- 支持中文动作名
+- 兼容别名：`观察异常` / `整合线索`
 
-`step` 会推进一个时段（早晨 -> 午后 -> 傍晚），并重新打印当前状态。
-
-## 4) 连续推进到结局（示例流程）
-
-下面是一套容易看懂机制的示例，不保证必定最优：
-
-```bash
-uv run haruhi step RUN 观察异常
-uv run haruhi step RUN 整合线索
-uv run haruhi step RUN 完成暑假作业
-uv run haruhi step RUN 策划惊喜活动
-uv run haruhi step RUN 同步循环真相
-uv run haruhi step RUN 安抚春日
-```
-
-推进过程中，重点关注：
-
-- `satisfaction`：春日情绪，太低会拖累整体走向
-- `stability`：世界线稳定度，过低可能引发闭锁空间风险
-- `clue_points`：线索累计，影响破局能力
-
-## 5) 查看当前状态、历史与回放
+查看状态与记录：
 
 ```bash
 uv run haruhi status RUN
@@ -77,48 +48,56 @@ uv run haruhi history RUN --last 10
 uv run haruhi replay RUN
 ```
 
-- `status`：看当前快照和可选动作
-- `history`：看最近 N 步记录
-- `replay`：回放整局并给出倾向小结
+## 4) TUI 模式：键盘游玩
 
-## 6) 批量模拟（可选）
+```bash
+uv run haruhi-play
+```
 
-想快速看“策略大概会导向什么结局”，可以运行：
+按键：
+
+- `1-8`：预选动作
+- `Enter`：确认执行
+- `n`：新开一局
+- `h`：帮助
+- `q`：退出
+
+说明：TUI 和 CLI 共用同一引擎与存档结构。
+
+## 5) 批量模拟
 
 ```bash
 uv run haruhi simulate --runs 100 --max-steps 30 --policy greedy
+uv run haruhi simulate --runs 100 --policy random --mutator-mode ai --seed 7
 ```
 
-- `--policy random`：随机策略
-- `--policy greedy`：贪心策略（默认）
-- `--mutator-mode deterministic|ai`：世界线扰动模式
-- `--seed`：固定随机种子用于复现实验
-- `--ai-temperature`：AI 扰动波动强度
+关键参数：
 
-## 7) 存档在什么位置
+- `--policy random|greedy`
+- `--mutator-mode deterministic|ai`
+- `--seed`
+- `--ai-temperature`
 
-每局数据保存在：
+## 6) 关注哪些指标
+
+- `satisfaction`：春日情绪
+- `stability`：世界稳定度
+- `clue_points`：线索累计
+- `homework_progress`：作业任务链进度
+- `crew_sync`：团员协同
+- `closed_space_stage`：闭锁危机阶段
+- `nagato_fatigue`：长门疲劳暗线
+
+## 7) 存档位置
 
 ```text
 .haruhi_runs/<run_id>/
+  state.json
+  history.jsonl
 ```
 
-其中通常包含：
+## 8) 运行测试
 
-- `state.json`：当前状态
-- `history.jsonl`：逐步历史
-
-## 8) 常见问题
-
-**Q: 提示找不到 run_id？**  
-A: 先执行 `start`，确认你在后续命令中使用了完整的运行标识。
-
-**Q: 动作名报错？**  
-A: 优先使用数字序号（1–8），或确保中文动作名与面板一致。
-
-**Q: 我想重开一局？**  
-A: 再次执行 `uv run haruhi start` 即可生成新的 run。
-
----
-
-完成以上步骤后，你已经掌握了本项目最核心的使用路径：`start -> step -> status/history/replay`。接下来可以尝试自己组合动作，观察不同世界线分支。
+```bash
+uv run pytest -q
+```
