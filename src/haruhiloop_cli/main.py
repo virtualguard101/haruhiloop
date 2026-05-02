@@ -5,11 +5,15 @@ from collections import Counter
 
 import typer
 
+from haruhiloop_cli import i18n
 from haruhiloop_cli.engine import GameEngine
 from haruhiloop_cli.policy import create_policy
-from haruhiloop_cli import storage, view
+from haruhiloop_cli import rules, storage, view
 
-app = typer.Typer(no_args_is_help=True, help="Haruhi Endless Eight time-loop simulator.")
+app = typer.Typer(
+    no_args_is_help=True,
+    help="《凉宫春日》无尽八月主题的时间循环命令行模拟器。",
+)
 engine = GameEngine()
 
 
@@ -19,24 +23,37 @@ def _new_run_id() -> str:
 
 @app.command(
     "start",
-    help="Start a new time-loop run and print the initial state panel.",
+    help="开始新的一局，并打印初始状态面板。",
 )
-def start(run_id: str | None = typer.Option(None, help="Optional run id.")) -> None:
+def start(
+    run_id: str | None = typer.Argument(None, help="可选；省略则随机生成运行标识。"),
+) -> None:
     rid = run_id or _new_run_id()
     state = engine.create_new_state(rid)
     storage.save_state(state)
+    view.render_start_intro()
     view.render_state(state, engine.available_actions(state))
-    typer.echo(f"Started run: {rid}")
+    typer.echo(f"已开始运行：{rid}")
 
 
 @app.command(
     "step",
-    help="Advance one timeslot by applying a chosen action to an existing run.",
+    help="对已有运行推进一个时段：先写运行标识，再写动作（序号 1–8 或中文动作名）。",
 )
 def step(
-    run_id: str = typer.Option(..., help="Run id."),
-    action: str = typer.Option(..., "--action", "-a", help="Action id to apply."),
+    run_id: str = typer.Argument(..., help="运行标识。"),
+    action_ref: str = typer.Argument(
+        ...,
+        metavar="动作",
+        help="动作序号 1–8，或与面板「动作」列一致的中文名。",
+    ),
 ) -> None:
+    try:
+        action_id = rules.resolve_action_ref(action_ref)
+    except ValueError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED)
+        raise typer.Exit(code=1) from exc
+
     try:
         state = storage.load_state(run_id)
     except FileNotFoundError as exc:
@@ -45,7 +62,7 @@ def step(
 
     history = storage.load_history(run_id)
     try:
-        result = engine.step(state=state, action_id=action, step_number=len(history) + 1)
+        result = engine.step(state=state, action_id=action_id, step_number=len(history) + 1)
     except ValueError as exc:
         typer.secho(str(exc), fg=typer.colors.RED)
         raise typer.Exit(code=1) from exc
@@ -58,9 +75,9 @@ def step(
 
 @app.command(
     "status",
-    help="Show the latest state snapshot and available actions for a run.",
+    help="显示某一运行的最新状态快照与当前可用动作。",
 )
-def status(run_id: str = typer.Option(..., help="Run id.")) -> None:
+def status(run_id: str = typer.Argument(..., help="运行标识。")) -> None:
     try:
         state = storage.load_state(run_id)
     except FileNotFoundError as exc:
@@ -71,11 +88,11 @@ def status(run_id: str = typer.Option(..., help="Run id.")) -> None:
 
 @app.command(
     "history",
-    help="Inspect step-by-step decision history from history.jsonl.",
+    help="从 history.jsonl 查看逐步决策历史。",
 )
 def history(
-    run_id: str = typer.Option(..., help="Run id."),
-    last: int | None = typer.Option(None, help="Only show last N records."),
+    run_id: str = typer.Argument(..., help="运行标识。"),
+    last: int | None = typer.Option(None, "--last", "-n", help="仅显示最近 N 条记录。"),
 ) -> None:
     try:
         storage.load_state(run_id)
@@ -88,9 +105,9 @@ def history(
 
 @app.command(
     "replay",
-    help="Replay a run timeline and summarize why it succeeded or failed.",
+    help="回放某一运行的轨迹，并小结成败倾向。",
 )
-def replay(run_id: str = typer.Option(..., help="Run id.")) -> None:
+def replay(run_id: str = typer.Argument(..., help="运行标识。")) -> None:
     try:
         state = storage.load_state(run_id)
     except FileNotFoundError as exc:
@@ -102,15 +119,19 @@ def replay(run_id: str = typer.Option(..., help="Run id.")) -> None:
 
 @app.command(
     "simulate",
-    help="Run many auto-play sessions with a policy to estimate ending distribution.",
+    help="用策略批量自动运行多局，估算结局分布。",
 )
 def simulate(
-    runs: int = typer.Option(50, help="Number of simulation runs."),
-    max_steps: int = typer.Option(30, help="Max steps per run."),
-    policy_name: str = typer.Option("greedy", "--policy", help="Policy: random or greedy."),
+    runs: int = typer.Option(50, help="模拟局数。"),
+    max_steps: int = typer.Option(30, help="每局最多步数。"),
+    policy_name: str = typer.Option(
+        "greedy",
+        "--policy",
+        help="策略名称：random（随机）或 greedy（贪心）。",
+    ),
 ) -> None:
     if runs <= 0:
-        typer.secho("runs must be > 0", fg=typer.colors.RED)
+        typer.secho("模拟局数必须大于 0", fg=typer.colors.RED)
         raise typer.Exit(code=1)
 
     try:
@@ -134,11 +155,12 @@ def simulate(
         if not state.is_finished:
             unresolved += 1
 
-    typer.echo(f"Simulated runs: {runs}")
-    typer.echo(f"Unresolved loops: {unresolved}")
+    typer.echo(f"模拟局数：{runs}")
+    typer.echo(f"未在步数内结算的循环：{unresolved}")
     for ending_id, count in sorted(endings.items(), key=lambda item: item[1], reverse=True):
         ratio = count / runs * 100
-        typer.echo(f"{ending_id}: {count} ({ratio:.1f}%)")
+        label = i18n.format_ending_summary(ending_id)
+        typer.echo(f"{label}（{ending_id}）：{count}（{ratio:.1f}%）")
 
 
 if __name__ == "__main__":

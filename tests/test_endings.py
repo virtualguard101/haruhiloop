@@ -8,7 +8,7 @@ def test_ending_haruhi_happy_new_world():
     state.clue_points = 10
     state.flags.update({"festival_plan", "homework_done", "truth_shared"})
 
-    result = engine.step(state, "calm_haruhi", 1)
+    result = engine.step(state, "安抚春日", 1)
 
     assert result.ending is not None
     assert result.ending.ending_id == "haruhi_happy_new_world"
@@ -21,7 +21,7 @@ def test_ending_kyon_breaks_loop():
     state.stability = 50
     state.flags.update({"anomaly_seen", "homework_done", "truth_shared"})
 
-    result = engine.step(state, "observe_anomaly", 1)
+    result = engine.step(state, "观察异常", 1)
 
     assert result.ending is not None
     assert result.ending.ending_id == "kyon_breaks_loop"
@@ -34,7 +34,7 @@ def test_ending_shinjin_emerges():
     state.stability = 0
     state.closed_space_count = 2
 
-    result = engine.step(state, "attend_class", 1)
+    result = engine.step(state, "老实上课", 1)
 
     assert result.ending is not None
     assert result.ending.ending_id == "shinirappears_unstable_world"

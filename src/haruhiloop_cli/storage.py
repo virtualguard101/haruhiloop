@@ -37,7 +37,7 @@ def save_state(state: GameState, base_dir: Path | None = None) -> None:
 def load_state(run_id: str, base_dir: Path | None = None) -> GameState:
     path = state_path(run_id, base_dir=base_dir)
     if not path.exists():
-        raise FileNotFoundError(f"Run not found: {run_id}")
+        raise FileNotFoundError(f"未找到运行记录：{run_id}")
     payload = json.loads(path.read_text(encoding="utf-8"))
     return GameState.from_dict(payload)
 
