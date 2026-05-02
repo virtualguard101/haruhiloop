@@ -57,6 +57,7 @@ class HaruhiPlayApp(App[None]):
         self._help_visible = False
         self._pending_index: int | None = None
         self._kyon_idx = 0
+        self._quote_phase = 0
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -64,6 +65,7 @@ class HaruhiPlayApp(App[None]):
         yield Footer()
 
     def on_mount(self) -> None:
+        self.set_interval(0.75, self._tick_quote_phase)
         self.action_new_game()
 
     def action_new_game(self) -> None:
@@ -169,6 +171,7 @@ class HaruhiPlayApp(App[None]):
             parts.append(self._help_panel())
         if not self._welcome_done:
             parts.append(self._welcome_panel())
+            parts.append(view.make_classic_quote_panel(pulse_phase=self._quote_phase))
         if self._last_record is not None:
             parts.append(view.make_step_panel(self._last_record))
         parts.append(view.make_metric_table(self.state))
@@ -190,6 +193,11 @@ class HaruhiPlayApp(App[None]):
             )
         content = Group(*parts)
         self.query_one("#main", Static).update(content)
+
+    def _tick_quote_phase(self) -> None:
+        self._quote_phase = (self._quote_phase + 1) % 2
+        if self.state is not None and not self._welcome_done:
+            self._refresh_main()
 
     def _feed_kyon_partial(self, low: str) -> None:
         """累积 k→y→o；第四位须为 n（见 on_key 特判，避免与「新局」绑定冲突）。"""

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from rich.align import Align
 from rich.console import Console
 from rich.panel import Panel
 from rich.style import Style
@@ -9,6 +10,7 @@ from haruhiloop_cli import i18n
 from haruhiloop_cli.models import Action, GameState, StepRecord
 
 console = Console()
+CLASSIC_QUOTE_JP = "過ぎ去った時間は、決して取り戻せないのよ"
 
 
 def make_metric_table(state: GameState) -> Table:
@@ -97,6 +99,14 @@ def render_start_intro() -> None:
 
 开局后会打印你的[cyan]运行标识[/cyan]，请记下来并在后续命令中原样使用。"""
     console.print(Panel(body.strip(), title="Haruhi Loop — 开局说明", border_style="cyan"))
+    console.print(make_classic_quote_panel())
+
+
+def make_classic_quote_panel(pulse_phase: int = 0) -> Panel:
+    border = "magenta" if pulse_phase % 2 == 0 else "bright_magenta"
+    jp_style = "italic white" if pulse_phase % 2 == 0 else "italic bright_white"
+    quote = f"[{jp_style}]{CLASSIC_QUOTE_JP}[/{jp_style}]"
+    return Panel(Align.center(quote, vertical="middle"), title="", border_style=border)
 
 
 def render_state(state: GameState, actions: list[Action]) -> None:
