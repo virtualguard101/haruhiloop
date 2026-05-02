@@ -25,7 +25,7 @@ class GameEngine:
         self,
         run_id: str,
         *,
-        mutator_mode: str = "deterministic",
+        mutator_mode: str = "ai",
         random_seed: int | None = None,
         ai_temperature: float = 0.7,
     ) -> GameState:

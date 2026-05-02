@@ -4,7 +4,7 @@ from haruhiloop_cli import rules
 
 def run_sequence(actions: list[str]):
     engine = GameEngine()
-    state = engine.create_new_state("test")
+    state = engine.create_new_state("test", mutator_mode="deterministic")
     history = []
     for idx, action in enumerate(actions, start=1):
         result = engine.step(state, action, idx)
