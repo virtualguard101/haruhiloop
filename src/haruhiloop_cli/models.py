@@ -65,7 +65,7 @@ class GameState:
     memory_residue: dict[str, int] = field(
         default_factory=lambda: {"clue_efficiency": 0, "sync_recovery": 0}
     )
-    mutator_mode: str = "deterministic"
+    mutator_mode: str = "ai"
     random_seed: int | None = None
     ai_temperature: float = 0.7
     worldline_mutation_profile: dict[str, float] = field(

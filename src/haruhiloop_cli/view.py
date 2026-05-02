@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from rich.align import Align
 from rich.console import Console
 from rich.panel import Panel
@@ -11,6 +13,38 @@ from haruhiloop_cli.models import Action, GameState, StepRecord
 
 console = Console()
 CLASSIC_QUOTE_JP = "過ぎ去った時間は、決して取り戻せないのよ"
+_GLITCH_CHARS = "・＊※＋×"
+
+
+@dataclass(slots=True)
+class QuoteVisualState:
+    pulse_phase: int = 0
+    closed_space_stage: int = 0
+    nagato_fatigue: int = 0
+    transition_frames: int = 0
+    clock_tick: int = 0
+    worldline_shift: int = 0
+    day: int = 1
+    loop_count: int = 1
+
+
+def build_quote_visual_state(
+    state: GameState,
+    *,
+    pulse_phase: int,
+    transition_frames: int,
+    clock_tick: int,
+) -> QuoteVisualState:
+    return QuoteVisualState(
+        pulse_phase=pulse_phase,
+        closed_space_stage=state.closed_space_stage,
+        nagato_fatigue=state.nagato_fatigue,
+        transition_frames=transition_frames,
+        clock_tick=clock_tick,
+        worldline_shift=state.worldline_shift,
+        day=state.day,
+        loop_count=state.loop_count,
+    )
 
 
 def make_metric_table(state: GameState) -> Table:
@@ -102,11 +136,62 @@ def render_start_intro() -> None:
     console.print(make_classic_quote_panel())
 
 
-def make_classic_quote_panel(pulse_phase: int = 0) -> Panel:
-    border = "magenta" if pulse_phase % 2 == 0 else "bright_magenta"
-    jp_style = "italic white" if pulse_phase % 2 == 0 else "italic bright_white"
-    quote = f"[{jp_style}]{CLASSIC_QUOTE_JP}[/{jp_style}]"
-    return Panel(Align.center(quote, vertical="middle"), title="", border_style=border)
+def make_worldline_status_panel(visual_state: QuoteVisualState) -> Panel:
+    seconds = visual_state.day * 60 + visual_state.clock_tick
+    shown = seconds - 1 if visual_state.clock_tick % 5 == 0 else seconds
+    reverse_mark = " << rewind" if visual_state.clock_tick % 5 == 0 else ""
+    line = (
+        f"WORLDLINE LOOP {visual_state.loop_count:03d} | "
+        f"DAY {visual_state.day:03d} | "
+        f"T+{shown:04d}s{reverse_mark} | "
+        f"SHIFT {visual_state.worldline_shift:03d}"
+    )
+    if visual_state.transition_frames > 0:
+        line += " | TRANSITION"
+    return Panel(Align.center(line), title="观测层", border_style="blue")
+
+
+def make_classic_quote_panel(
+    visual_state: QuoteVisualState | None = None,
+    *,
+    pulse_phase: int = 0,
+) -> Panel:
+    state = visual_state or QuoteVisualState(pulse_phase=pulse_phase)
+    border = "magenta"
+    if state.closed_space_stage >= 2:
+        border = "red" if state.pulse_phase % 2 == 0 else "bright_red"
+    elif state.pulse_phase % 2 == 1:
+        border = "bright_magenta"
+
+    jp_style = "italic white" if state.pulse_phase % 2 == 0 else "italic bright_white"
+    noise_level = 0
+    if state.nagato_fatigue >= 85:
+        noise_level = 3
+    elif state.nagato_fatigue >= 70:
+        noise_level = 2
+    elif state.nagato_fatigue >= 55:
+        noise_level = 1
+
+    quote_text = _apply_noise(CLASSIC_QUOTE_JP, noise_level=noise_level, seed=state.clock_tick + state.day)
+    # Keep a single-line quote while preserving a subtle breathing drift.
+    drift_left = " " if state.pulse_phase % 2 == 0 else "  "
+    drift_right = "  " if state.pulse_phase % 2 == 0 else " "
+    block = f"[{jp_style}]{drift_left}{quote_text}{drift_right}[/{jp_style}]"
+    title = ""
+    if state.transition_frames > 0:
+        title = "名台词 · WORLDLINE SHIFT"
+    return Panel(Align.center(block, vertical="middle"), title=title, border_style=border)
+
+
+def _apply_noise(text: str, *, noise_level: int, seed: int) -> str:
+    if noise_level <= 0:
+        return text
+    chars = list(text)
+    step = max(4, 10 - noise_level * 2)
+    for idx in range((seed + noise_level) % step, len(chars), step):
+        if chars[idx] != " ":
+            chars[idx] = _GLITCH_CHARS[(idx + seed) % len(_GLITCH_CHARS)]
+    return "".join(chars)
 
 
 def render_state(state: GameState, actions: list[Action]) -> None:

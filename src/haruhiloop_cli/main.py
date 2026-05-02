@@ -29,9 +29,9 @@ def _new_run_id() -> str:
 def start(
     run_id: str | None = typer.Argument(None, help="可选；省略则随机生成运行标识。"),
     mutator_mode: str = typer.Option(
-        "deterministic",
+        "ai",
         "--mutator-mode",
-        help="世界线扰动模式：deterministic（确定性）或 ai（受控非确定性）。",
+        help="世界线扰动模式：ai（默认）或 deterministic（确定性）。",
     ),
     seed: int | None = typer.Option(None, "--seed", help="随机种子（用于复现实验）。"),
     ai_temperature: float = typer.Option(0.7, "--ai-temperature", help="AI 扰动温度（0.0-1.5）。"),
@@ -149,9 +149,9 @@ def simulate(
         help="策略名称：random（随机）或 greedy（贪心）。",
     ),
     mutator_mode: str = typer.Option(
-        "deterministic",
+        "ai",
         "--mutator-mode",
-        help="世界线扰动模式：deterministic 或 ai。",
+        help="世界线扰动模式：ai（默认）或 deterministic。",
     ),
     seed: int | None = typer.Option(None, "--seed", help="随机种子（用于复现实验）。"),
     ai_temperature: float = typer.Option(0.7, "--ai-temperature", help="AI 扰动温度（0.0-1.5）。"),

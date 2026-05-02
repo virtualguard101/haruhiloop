@@ -20,6 +20,8 @@ from haruhiloop_cli import rules, storage, view
 from haruhiloop_cli.ending_conditions_zh import DISPLAY_FOR_CHEAT
 
 _CHEAT_CODE = "kyon"
+_TUI_DEFAULT_MUTATOR_MODE = "ai"
+_TUI_DEFAULT_AI_TEMPERATURE = 1.5
 
 _HELP_BODY = """\
 [bold]数字键 1–8[/bold]  预选一行（表格中会反色高亮）；换数字即换高亮
@@ -58,6 +60,10 @@ class HaruhiPlayApp(App[None]):
         self._pending_index: int | None = None
         self._kyon_idx = 0
         self._quote_phase = 0
+        self._clock_tick = 0
+        self._transition_frames = 0
+        self._last_day = 1
+        self._last_loop_count = 1
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -65,17 +71,26 @@ class HaruhiPlayApp(App[None]):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.set_interval(0.75, self._tick_quote_phase)
+        self.set_interval(0.7, self._tick_quote_phase)
         self.action_new_game()
 
     def action_new_game(self) -> None:
         self.run_id = uuid.uuid4().hex[:8]
-        self.state = self.engine.create_new_state(self.run_id)
+        self.state = self.engine.create_new_state(
+            self.run_id,
+            mutator_mode=_TUI_DEFAULT_MUTATOR_MODE,
+            random_seed=None,
+            ai_temperature=_TUI_DEFAULT_AI_TEMPERATURE,
+        )
         self._last_record = None
         self._welcome_done = False
         self._help_visible = False
         self._pending_index = None
         self._kyon_idx = 0
+        self._clock_tick = 0
+        self._transition_frames = 0
+        self._last_day = self.state.day
+        self._last_loop_count = self.state.loop_count
         storage.save_state(self.state)
         self.sub_title = f"运行 {self.run_id}"
         self._refresh_main()
@@ -113,6 +128,8 @@ class HaruhiPlayApp(App[None]):
         action_id = rules.resolve_action_ref(str(index))
         history = storage.load_history(self.run_id)
         step_no = len(history) + 1
+        prev_day = self.state.day
+        prev_loop_count = self.state.loop_count
         try:
             result = self.engine.step(self.state, action_id, step_no)
         except ValueError as exc:
@@ -122,6 +139,10 @@ class HaruhiPlayApp(App[None]):
         self._welcome_done = True
         storage.append_history(self.run_id, result.record)
         storage.save_state(result.state)
+        if self.state.day != prev_day or self.state.loop_count != prev_loop_count:
+            self._transition_frames = 2
+        self._last_day = self.state.day
+        self._last_loop_count = self.state.loop_count
         return True
 
     def on_key(self, event: events.Key) -> None:
@@ -166,12 +187,19 @@ class HaruhiPlayApp(App[None]):
         if self.state is None:
             return
         actions = self.engine.available_actions(self.state)
+        visual_state = view.build_quote_visual_state(
+            self.state,
+            pulse_phase=self._quote_phase,
+            transition_frames=self._transition_frames,
+            clock_tick=self._clock_tick,
+        )
         parts: list = []
         if self._help_visible:
             parts.append(self._help_panel())
+        parts.append(view.make_worldline_status_panel(visual_state))
+        parts.append(view.make_classic_quote_panel(visual_state))
         if not self._welcome_done:
             parts.append(self._welcome_panel())
-            parts.append(view.make_classic_quote_panel(pulse_phase=self._quote_phase))
         if self._last_record is not None:
             parts.append(view.make_step_panel(self._last_record))
         parts.append(view.make_metric_table(self.state))
@@ -196,7 +224,10 @@ class HaruhiPlayApp(App[None]):
 
     def _tick_quote_phase(self) -> None:
         self._quote_phase = (self._quote_phase + 1) % 2
-        if self.state is not None and not self._welcome_done:
+        self._clock_tick += 1
+        if self._transition_frames > 0:
+            self._transition_frames -= 1
+        if self.state is not None:
             self._refresh_main()
 
     def _feed_kyon_partial(self, low: str) -> None:
