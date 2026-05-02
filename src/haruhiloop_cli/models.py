@@ -18,6 +18,7 @@ class Action:
     delta_satisfaction: int = 0
     delta_stability: int = 0
     delta_clue_points: int = 0
+    delta_nagato_fatigue: int = 0
     add_flags: tuple[str, ...] = ()
 
 
@@ -74,8 +75,10 @@ class GameState:
             "clue_factor": 1.0,
         }
     )
+    nagato_fatigue: int = 0
     ending_id: str | None = None
     ending_title: str | None = None
+    ending_epilogue: str | None = None
     flags: set[str] = field(default_factory=set)
     recent_actions: list[str] = field(default_factory=list)
     current_action_streak: int = 0
@@ -124,6 +127,8 @@ class GameState:
             )
         )
         parsed.pop("timeslot", None)
+        parsed.setdefault("ending_epilogue", None)
+        parsed.setdefault("nagato_fatigue", 0)
         return cls(**parsed)
 
 

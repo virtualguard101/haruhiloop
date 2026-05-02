@@ -53,8 +53,8 @@
 |:---:|:---|:---|
 | 1 | 老实上课 | 按部就班，风险低但推进有限 |
 | 2 | 社团活动 | SOS 团日常，可短期缓解无聊 |
-| 3 | 观察异常 | 观察违和与循环征兆 |
-| 4 | 整合线索 | 把重复细节串成可用信息 |
+| 3 | 向长门核对异常 | 请长门核对违和与循环征兆（积累长门疲劳） |
+| 4 | 向长门借资料 | 向长门借阅旁证与索引（积累更多长门疲劳） |
 | 5 | 策划惊喜活动 | 用新鲜感对冲无聊 |
 | 6 | 完成暑假作业 | 致敬八月篇「作业未完成」症结 |
 | 7 | 同步循环真相 | 让众人知晓循环、统一行动 |
@@ -87,7 +87,7 @@ uv run haruhi start RUN          # 可选：自定运行标识
 uv run haruhi start --mutator-mode ai --seed 42 --ai-temperature 0.9
 
 uv run haruhi step RUN 3         # 推进：第二参数为序号 1–8
-uv run haruhi step RUN 观察异常   # 或与面板一致的中文动作名
+uv run haruhi step RUN 向长门核对异常   # 或与面板一致的中文动作名
 
 uv run haruhi status RUN
 uv run haruhi history RUN --last 10

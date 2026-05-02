@@ -28,7 +28,7 @@ def apply_crew_sync(state: GameState, action_id: str) -> list[EventOutcome]:
                     delta_stability=-2,
                 )
             )
-    elif action_id in {"整合线索", "观察异常"}:
+    elif action_id in {"整合线索", "观察异常", "向长门借资料", "向长门核对异常"}:
         state.crew_sync = clamp(state.crew_sync + 2)
         _boost_members(state, 1)
     elif action_id == "社团活动":

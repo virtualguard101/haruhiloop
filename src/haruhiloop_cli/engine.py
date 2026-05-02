@@ -58,6 +58,7 @@ class GameEngine:
         state.satisfaction = clamp(state.satisfaction + round(action.delta_satisfaction * sat_factor))
         state.stability = clamp(state.stability + round(action.delta_stability * stab_factor))
         state.clue_points = clamp(state.clue_points + round(action.delta_clue_points * clue_factor))
+        state.nagato_fatigue = clamp(state.nagato_fatigue + action.delta_nagato_fatigue)
         state.flags.update(action.add_flags)
         self._update_streak(state, action_id)
         state.recent_actions.append(action_id)
@@ -84,6 +85,7 @@ class GameEngine:
         if ending is not None:
             state.ending_id = ending.ending_id
             state.ending_title = ending.title
+            state.ending_epilogue = ending.description
 
         self._advance_time(state)
 

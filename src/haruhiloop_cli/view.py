@@ -2,12 +2,80 @@ from __future__ import annotations
 
 from rich.console import Console
 from rich.panel import Panel
+from rich.style import Style
 from rich.table import Table
 
 from haruhiloop_cli import i18n
 from haruhiloop_cli.models import Action, GameState, StepRecord
 
 console = Console()
+
+
+def make_metric_table(state: GameState) -> Table:
+    ts = i18n.format_timeslot(state.timeslot)
+    table = Table(title=f"运行 {state.run_id} | 第 {state.day} 天 · {ts}")
+    table.add_column("指标")
+    table.add_column("数值", justify="right")
+    table.add_row("循环周目", str(state.loop_count))
+    table.add_row("春日满意度", str(state.satisfaction))
+    table.add_row("世界稳定度", str(state.stability))
+    table.add_row("线索点数", str(state.clue_points))
+    table.add_row("作业进度", f"{state.homework_progress}/3")
+    if state.homework_parts_done:
+        table.add_row("作业环节", ", ".join(state.homework_parts_done))
+    table.add_row("团员协同", str(state.crew_sync))
+    table.add_row("闭锁空间次数", str(state.closed_space_count))
+    table.add_row("闭锁空间阶段", str(state.closed_space_stage))
+    residue = state.memory_residue
+    table.add_row(
+        "记忆残留",
+        f"索效+{residue.get('clue_efficiency', 0)} / 协同恢复+{residue.get('sync_recovery', 0)}",
+    )
+    table.add_row("扰动模式", state.mutator_mode)
+    table.add_row("世界线偏移", str(state.worldline_shift))
+    table.add_row("长门疲劳度", str(state.nagato_fatigue))
+    if state.flags:
+        table.add_row("叙事标记", i18n.format_flags(state.flags))
+    if state.is_finished:
+        etitle = state.ending_title or ""
+        table.add_row("结局", f"{state.ending_id}（{etitle}）")
+        if state.ending_epilogue:
+            table.add_row("结局剧情", state.ending_epilogue)
+    return table
+
+
+_ROW_HIGHLIGHT = Style(bold=True, reverse=True)
+
+
+def make_action_table(
+    actions: list[Action],
+    *,
+    subtitle: str = "",
+    highlight_index: int | None = None,
+) -> Table:
+    """highlight_index: 1–len(actions)，与面板序号一致；用于 TUI 预选高亮。"""
+    title = "可用动作" + subtitle
+    action_table = Table(title=title)
+    action_table.add_column("序号", justify="right")
+    action_table.add_column("动作")
+    action_table.add_column("倾向（情/稳/索/门疲）")
+    action_table.add_column("说明")
+    for index, action in enumerate(actions, start=1):
+        impact = (
+            f"情{action.delta_satisfaction:+d} "
+            f"稳{action.delta_stability:+d} "
+            f"索{action.delta_clue_points:+d} "
+            f"门{action.delta_nagato_fatigue:+d}"
+        )
+        row_style = _ROW_HIGHLIGHT if highlight_index == index else None
+        action_table.add_row(
+            str(index),
+            action.action_id,
+            impact,
+            action.description,
+            style=row_style,
+        )
+    return action_table
 
 
 def render_start_intro() -> None:
@@ -32,33 +100,7 @@ def render_start_intro() -> None:
 
 
 def render_state(state: GameState, actions: list[Action]) -> None:
-    ts = i18n.format_timeslot(state.timeslot)
-    table = Table(title=f"运行 {state.run_id} | 第 {state.day} 天 · {ts}")
-    table.add_column("指标")
-    table.add_column("数值", justify="right")
-    table.add_row("循环周目", str(state.loop_count))
-    table.add_row("春日满意度", str(state.satisfaction))
-    table.add_row("世界稳定度", str(state.stability))
-    table.add_row("线索点数", str(state.clue_points))
-    table.add_row("作业进度", f"{state.homework_progress}/3")
-    if state.homework_parts_done:
-        table.add_row("作业环节", ", ".join(state.homework_parts_done))
-    table.add_row("团员协同", str(state.crew_sync))
-    table.add_row("闭锁空间次数", str(state.closed_space_count))
-    table.add_row("闭锁空间阶段", str(state.closed_space_stage))
-    residue = state.memory_residue
-    table.add_row(
-        "记忆残留",
-        f"索效+{residue.get('clue_efficiency', 0)} / 协同恢复+{residue.get('sync_recovery', 0)}",
-    )
-    table.add_row("扰动模式", state.mutator_mode)
-    table.add_row("世界线偏移", str(state.worldline_shift))
-    if state.flags:
-        table.add_row("叙事标记", i18n.format_flags(state.flags))
-    if state.is_finished:
-        etitle = state.ending_title or ""
-        table.add_row("结局", f"{state.ending_id}（{etitle}）")
-    console.print(table)
+    console.print(make_metric_table(state))
     if state.closed_space_stage > 0:
         console.print(
             Panel(
@@ -67,28 +109,18 @@ def render_state(state: GameState, actions: list[Action]) -> None:
                 border_style="red",
             )
         )
-
-    action_table = Table(title="可用动作（step 时第二参数可填序号或下列中文名）")
-    action_table.add_column("序号", justify="right")
-    action_table.add_column("动作")
-    action_table.add_column("倾向（情/稳/索）")
-    action_table.add_column("说明")
-    for index, action in enumerate(actions, start=1):
-        impact = (
-            f"情{action.delta_satisfaction:+d} "
-            f"稳{action.delta_stability:+d} "
-            f"索{action.delta_clue_points:+d}"
-        )
-        action_table.add_row(str(index), action.action_id, impact, action.description)
-    console.print(action_table)
+    console.print(
+        make_action_table(actions, subtitle="（step 时第二参数可填序号或下列中文名）"),
+    )
 
 
-def render_step(record: StepRecord) -> None:
+def make_step_panel(record: StepRecord) -> Panel:
     lines = [
         f"动作：{record.action_id}",
         f"变化 | 春日满意度：{record.before['satisfaction']} → {record.after['satisfaction']}",
         f"变化 | 世界稳定度：{record.before['stability']} → {record.after['stability']}",
         f"变化 | 线索点数：{record.before['clue_points']} → {record.after['clue_points']}",
+        f"变化 | 长门疲劳：{record.before.get('nagato_fatigue', 0)} → {record.after.get('nagato_fatigue', 0)}",
     ]
     if record.mutation_profile:
         profile = record.mutation_profile
@@ -104,7 +136,16 @@ def render_step(record: StepRecord) -> None:
     if record.ending_id:
         zh = i18n.format_ending_summary(record.ending_id)
         lines.append(f"触发结局：{zh}（{record.ending_id}）")
-    console.print(Panel("\n".join(lines), title=f"第 {record.step_number} 步"))
+        ep = record.after.get("ending_epilogue") if isinstance(record.after, dict) else None
+        if ep:
+            lines.append("")
+            lines.append("[bold]结局剧情[/bold]")
+            lines.append(str(ep))
+    return Panel("\n".join(lines), title=f"第 {record.step_number} 步")
+
+
+def render_step(record: StepRecord) -> None:
+    console.print(make_step_panel(record))
 
 
 def render_history(records: list[StepRecord], last: int | None = None) -> None:
