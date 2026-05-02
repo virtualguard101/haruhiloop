@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from haruhiloop_cli.models import Action, Ending, GameState, StepRecord, TIMESLOTS, clamp
-from haruhiloop_cli import rules
+from haruhiloop_cli import i18n, rules
 
 
 @dataclass(slots=True)
@@ -24,11 +24,11 @@ class GameEngine:
 
     def step(self, state: GameState, action_id: str, step_number: int) -> StepResult:
         if state.is_finished:
-            raise ValueError(f"Run already finished with ending: {state.ending_id}")
+            raise ValueError(f"本局已结束，结局：{state.ending_id}")
 
         action = rules.ACTIONS.get(action_id)
         if action is None:
-            raise ValueError(f"Unknown action: {action_id}")
+            raise ValueError(f"未知动作：{action_id}")
 
         before = state.snapshot()
         state.satisfaction = clamp(state.satisfaction + action.delta_satisfaction)
@@ -47,7 +47,7 @@ class GameEngine:
             state.stability = clamp(state.stability + event.delta_stability)
             state.clue_points = clamp(state.clue_points + event.delta_clue_points)
             state.flags.update(event.add_flags)
-            event_labels.append(f"{event.event_id}: {event.description}")
+            event_labels.append(i18n.format_event_line(event))
             if event.event_id == "closed_space":
                 state.closed_space_count += 1
                 state.worldline_shift += 3

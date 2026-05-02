@@ -9,7 +9,9 @@
 
 </div>
 
-受《凉宫春日的忧郁》中“无尽的八月”主题启发，这款命令行界面模拟了一个时间循环场景，主角凉宫春日不断重复经历同一天。该模拟在`v0`版本具有确定性，即相同的初始状态和行动序列总会产生相同的结果。
+受《凉宫春日的忧郁》中“无尽的八月”主题启发，这款命令行界面模拟了一个时间循环场景，主角凉宫春日不断重复经历同一天。该模拟在 `v0` 版本具有确定性，即相同的初始状态和行动序列总会产生相同的结果。
+
+**界面语言**：终端输出、动作名称与 CLI 说明默认为**简体中文**。存档中的内部标记（如 `flags`、结局 `ending_id`）仍为英文键名，便于逻辑与测试保持一致。
 
 ## 玩法与剧情对应
 
@@ -21,7 +23,7 @@
 - **阿虚式微调破局**：通过微小且持续的行动积累（找线索、协调队友、补完遗留事项）逐步改写结局。
 - **多世界线结局**：可能进入“新世界线”、成功跳出循环，或滑向崩坏结局（神人出现）。
 
-你可以把每条命令理解成“推进这一集剧情的一步”，把每次 action 理解成 SOS 团的一次干预。
+你可以把每条命令理解成“推进这一集剧情的一步”，把每次选择的动作理解成 SOS 团的一次干预。
 
 ## 核心状态模型
 
@@ -38,144 +40,89 @@
 - 相同初始状态 + 相同行动序列 = 相同结果
 - 便于复盘、调参与演示
 
-## 行动与剧情含义
+## 行动与剧情含义（动作 ID 为中文）
 
-- `attend_class`：按部就班上课，风险低但推进有限
-- `club_activity`：进行 SOS 团日常，能短期缓解无聊但未必治本
-- `observe_anomaly`：观察异常，定位循环征兆
-- `collect_clue`：整合线索，形成可执行信息
-- `plan_festival`：制造真正“新鲜”的活动来对冲无聊
-- `complete_homework`：致敬八月篇破局关键“暑假作业未完成”
-- `share_truth`：向团队同步循环真相，统一行动策略
-- `calm_haruhi`：在高风险阶段稳定春日情绪
+下列 8 个动作在面板中以「序号」1–8 列出，`step` 时第二参数可填序号或完整中文名：
 
-## 结局与叙事解释
+| 序号 | 动作 ID（中文） | 含义提要 |
+|:---:|:---|:---|
+| 1 | 老实上课 | 按部就班，风险低但推进有限 |
+| 2 | 社团活动 | SOS 团日常，可短期缓解无聊 |
+| 3 | 观察异常 | 观察违和与循环征兆 |
+| 4 | 整合线索 | 把重复细节串成可用信息 |
+| 5 | 策划惊喜活动 | 用新鲜感对冲无聊 |
+| 6 | 完成暑假作业 | 致敬八月篇「作业未完成」症结 |
+| 7 | 同步循环真相 | 让众人知晓循环、统一行动 |
+| 8 | 安抚春日 | 不稳时稳住春日情绪 |
 
-- `haruhi_happy_new_world`  
-  春日情绪被满足，关键条件达成，世界线转入更健康的未来。
+## 结局与叙事解释（内部 ending_id）
 
-- `kyon_breaks_loop`  
-  通过细小改变的持续累积，最终跳出重复日常。
+- `haruhi_happy_new_world`：春日情绪被满足，关键条件达成，世界线转入更健康的未来。
+- `kyon_breaks_loop`：细小改变累积到位，跳出重复日常。
+- `shinirappears_unstable_world`：情绪与稳定度双重崩塌，闭锁空间灾害升级。
 
-- `shinirappears_unstable_world`  
-  情绪与稳定度双重崩塌，闭锁空间灾害升级。
-
-## 快速开始（uv）
+## 快速开始
 
 ```bash
 uv sync --extra dev
 uv run haruhi start
 ```
 
-命令会输出一个 `run_id`，例如 `a1b2c3d4`。
+未安装 `uv` 时可在项目根目录：`pip install -e ".[dev]"`，再使用 `haruhi` 命令。
 
-## 核心命令
+开局会先打印**开局说明**（简介、目标、常用命令），随后给出状态面板与 **运行标识**（如 `a1b2c3d4`），请记下并在后续命令中使用。
+
+## 核心命令（位置参数）
+
+以下示例中的 `RUN` 请替换为你的运行标识。
 
 ```bash
-uv run haruhi step --run-id a1b2c3d4 --action observe_anomaly
-uv run haruhi status --run-id a1b2c3d4
-uv run haruhi history --run-id a1b2c3d4 --last 10
-uv run haruhi replay --run-id a1b2c3d4
+uv run haruhi start
+uv run haruhi start RUN          # 可选：自定运行标识
+
+uv run haruhi step RUN 3         # 推进：第二参数为序号 1–8
+uv run haruhi step RUN 观察异常   # 或与面板一致的中文动作名
+
+uv run haruhi status RUN
+uv run haruhi history RUN --last 10
+uv run haruhi replay RUN
+uv run haruhi simulate --runs 100 --max-steps 30 --policy greedy
 ```
 
 ## 命令详解
 
 ### `start`
 
-创建新 run，并输出：
+创建新 run，并依次输出：
 
-- 当前状态面板
-- 可用动作列表
-- 生成的 `run_id`
-
-示例：
-
-```bash
-uv run haruhi start
-uv run haruhi start --run-id demo001
-```
+1. 开局说明（简介、目标、操作提示）
+2. 当前状态面板与可用动作表（含序号）
+3. 终端一行提示：`已开始运行：<run_id>`
 
 ### `step`
 
-对已有 run 推进一个时段（`morning -> afternoon -> evening`）。
-该命令会依次执行：
+对已有 run 推进一个时段（`morning → afternoon → evening → 次日…`）。流程：应用动作增量 → 事件增量 → 判定结局 → 推进时间。
 
-1. 应用动作增量
-2. 应用触发事件增量
-3. 判定结局
-4. 推进时间
-
-必填参数：
-
-- `--run-id`：目标 run
-- `--action`：动作 ID（从动作列表中选择）
-
-示例：
-
-```bash
-uv run haruhi step --run-id a1b2c3d4 --action collect_clue
-```
+**用法**：`haruhi step <运行标识> <动作>`  
+第二参数为 **序号 1–8**（与面板「序号」列对应），或与表中一致的 **中文动作名**（不可再加 `--run-id` / `--action` 长选项）。
 
 ### `status`
 
-查看 run 的最新持久化状态，包括关键指标、flags 和当前动作列表。
-
-示例：
-
-```bash
-uv run haruhi status --run-id a1b2c3d4
-```
+查看当前持久化状态与可用动作列表。
 
 ### `history`
 
-读取 `history.jsonl` 并展示简要步骤日志。
-
-可选参数：
-
-- `--last N`：仅查看最近 N 步
-
-示例：
-
-```bash
-uv run haruhi history --run-id a1b2c3d4
-uv run haruhi history --run-id a1b2c3d4 --last 8
-```
+读取 `history.jsonl`。可选 `--last N` / `-n`：仅最近 N 步。
 
 ### `replay`
 
-回放完整轨迹，并给出成功/失败趋势总结。
-
-示例：
-
-```bash
-uv run haruhi replay --run-id a1b2c3d4
-```
-
-可选模拟：
-
-```bash
-uv run haruhi simulate --runs 100 --max-steps 30 --policy greedy
-```
-
-可用来比较不同策略倾向（例如“保稳定优先”与“冲线索优先”）及结局分布。
+回放轨迹并给出简要成败倾向小结。
 
 ### `simulate`
 
-批量自动运行，不影响你的手动 run。
+批量自动局，不写入手动存档；参数 `--runs`、`--max-steps`、`--policy`（`random` 或 `greedy`）。
 
-主要参数：
-
-- `--runs`：模拟局数
-- `--max-steps`：每局最大步数
-- `--policy`：`random` 或 `greedy`
-
-示例：
-
-```bash
-uv run haruhi simulate --runs 200 --max-steps 40 --policy random
-```
-
-## CLI 帮助提示
+## CLI 帮助
 
 ```bash
 uv run haruhi --help
@@ -183,25 +130,13 @@ uv run haruhi step --help
 uv run haruhi simulate --help
 ```
 
-## Actions
+## 存档位置
 
-- `attend_class`
-- `club_activity`
-- `observe_anomaly`
-- `collect_clue`
-- `plan_festival`
-- `complete_homework`
-- `share_truth`
-- `calm_haruhi`
-
-## Endings
-
-- `haruhi_happy_new_world`
-- `kyon_breaks_loop`
-- `shinirappears_unstable_world`
+默认在项目运行时的当前目录下：`.haruhi_runs/<run_id>/`，内含 `state.json` 与 `history.jsonl`。
 
 ## 运行测试
 
 ```bash
 uv run pytest -q
+# 或：python -m pytest -q（需已 pip install -e ".[dev]" 且 pythonpath 配置正确）
 ```
