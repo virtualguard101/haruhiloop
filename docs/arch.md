@@ -1,247 +1,120 @@
-# Haruhi Loop CLI Architecture
+# Haruhi Loop 架构说明
 
 [English](arch.md)
 [简体中文](arch_zh-CN.md)
 
-## 1. Goals
+## 1. 当前范围
 
-This project is a `Python + CLI` prototype built for fun. The design priorities are:
+当前运行面包含：
 
-- Use “infinite loops + small accumulated changes” as the core mechanic.
-- Keep the system explainable: every state transition must be traceable and replayable.
-- Keep the system extensible: adding actions/events/endings should avoid engine rewrites.
-- Keep the code maintainable: clear module boundaries and low coupling.
+- Typer CLI（`haruhi`）
+- Textual TUI（`haruhi-play`）
+- 共用模拟引擎与存档层
 
-## 2. Layered Architecture
+目标是保证：逻辑可回放、可测试，同时能持续扩展动作、事件、结局与叙事文本。
+
+## 2. 分层关系
 
 ```mermaid
 flowchart TD
-  cliLayer[CLI Layer main.py] --> engineLayer[Engine Layer engine.py]
-  cliLayer --> storageLayer[Storage Layer storage.py]
-  cliLayer --> viewLayer[View Layer view.py]
-  cliLayer --> policyLayer[Policy Layer policy.py]
-  engineLayer --> modelsLayer[Domain Models models.py]
-  engineLayer --> rulesLayer[Rule Config rules.py]
-  storageLayer --> modelsLayer
-  viewLayer --> modelsLayer
-  policyLayer --> modelsLayer
-  rulesLayer --> modelsLayer
+  cliLayer[CLI haruhiloop_cli::main.py] --> engineLayer[引擎 haruhiloop_cli::engine.py]
+  runnerLayer[main.py] --> tuiLayer[haruhiloop_cli::play_app.py]
+  tuiLayer[TUI haruhiloop_cli::play_app.py] --> engineLayer
+  cliLayer --> storageLayer[存档 haruhiloop_cli::storage.py]
+  tuiLayer --> storageLayer
+  cliLayer --> viewLayer[渲染 haruhiloop_cli::view.py]
+  tuiLayer --> viewLayer
+  engineLayer --> rulesLayer[规则 haruhiloop_cli::rules.py]
+  engineLayer --> systemsLayer[子系统 haruhiloop_cli::systems/*]
+  engineLayer --> mutatorLayer[扰动 haruhiloop_cli::mutator.py]
+  engineLayer --> modelLayer[模型 haruhiloop_cli::models.py]
+  rulesLayer --> endingTextLayer[结局文本 haruhiloop_cli::ending_epilogues.py]
 ```
 
-Layer responsibilities:
-
-- `CLI Layer`: parse commands, orchestrate execution, and manage user-facing errors.
-- `Engine Layer`: advance state, apply events, and evaluate endings (core business logic).
-- `Rule Config`: action table, event conditions, and ending conditions.
-- `Storage Layer`: runtime persistence and history logs.
-- `View Layer`: terminal rendering through Rich only.
-- `Policy Layer`: pluggable strategy interface (future RL integration point).
-- `Domain Models`: shared typed structures and serialization boundaries.
-
-## 3. File Responsibilities
+## 3. 关键文件
 
 ```text
-src/haruhi_cli/
-  __init__.py      # Package marker
-  main.py          # Typer command definitions and orchestration
-  models.py        # Domain models (state/action/event/ending/step record)
-  engine.py        # Core state machine and step lifecycle
-  rules.py         # Table-driven actions and rule evaluation
-  storage.py       # state.json + history.jsonl persistence
-  view.py          # Rich-based terminal rendering
-  policy.py        # Policy protocol and built-in strategies
-
-tests/
-  test_engine.py   # Determinism and closed-space trigger tests
-  test_endings.py  # Ending reachability tests
+src/haruhiloop_cli/
+  main.py                  # CLI 命令
+  play_app.py              # Textual 键盘界面
+  engine.py                # 单步流程编排
+  rules.py                 # 动作/事件/结局规则
+  systems/
+    homework.py            # 作业任务链
+    crew.py                # 团员协同
+    closed_space.py        # 闭锁阶段危机流
+    memory.py              # 循环记忆残留
+  mutator.py               # deterministic / ai 扰动 profile
+  models.py                # 状态与记录模型
+  storage.py               # state.json + history.jsonl
+  view.py                  # Rich 展示（CLI/TUI 共用）
+  ending_epilogues.py      # 结局长剧情
+  ending_conditions_zh.py  # TUI 作弊查看文本
 ```
 
-## 4. Domain Model
+## 4. 引擎单步流程
 
-### 4.1 `GameState`
+`GameEngine.step` 的顺序：
 
-Key fields:
+1. 校验动作并生成步前快照
+2. 应用动作增量（受 mutation profile 缩放）
+3. 更新连击与世界线偏移
+4. 执行子系统钩子（作业、协同、闭锁、记忆）
+5. 执行规则事件（`evaluate_events`）
+6. 应用所有事件增量
+7. 判定结局并写入结局剧情
+8. 推进时段/日期，并在跨天时刷新 profile
+9. 生成包含 `mutation_profile` 的 `StepRecord`
 
-- Time: `day`, `timeslot_index`, `loop_count`
-- World status: `satisfaction`, `stability`, `clue_points`, `worldline_shift`
-- Risk: `closed_space_count`
-- Progress: `flags`, `recent_actions`, `current_action_streak`
-- Final state: `ending_id`, `ending_title`
+## 5. 时间模型
 
-Design notes:
+- `TIMESLOTS = ("morning", "afternoon", "evening")`
+- 每次 `step` 推进一个时段
+- 傍晚步会触发日终漂移，随后进入下一天并增加 `loop_count`
 
-- `snapshot()` provides a stable, serializable state for persistence and replay diffs.
-- `flags` is a scalable fact-set to avoid frequent schema changes.
-- `timeslot` is derived from `timeslot_index` to reduce redundant storage.
+## 6. 扰动模型
 
-### 4.2 `Action`, `EventOutcome`, and `Ending`
+`mutator.py` 提供：
 
-- `Action`: user-selectable behavior with state deltas.
-- `EventOutcome`: rule-triggered side effects (e.g., Closed Space).
-- `Ending`: terminal outcome object (`ending_id`, `title`, `description`).
+- `DeterministicMutator`
+- `AIMutator`（本地伪 AI 扰动，不调用外部 API）
+- `validate_profile`（对系数做安全钳制）
 
-### 4.3 `StepRecord`
+Profile 字段：
 
-Each step captures:
+- `satisfaction_factor`
+- `stability_factor`
+- `clue_factor`
 
-- pre-step and post-step snapshots
-- selected action metadata
-- triggered event list
-- optional ending marker
+## 7. 持久化
 
-This enables transparent replay and fast balancing/debugging loops.
+每局路径：
 
-## 5. Runtime Flow
-
-Single-step logic (`engine.GameEngine.step`):
-
-```mermaid
-flowchart TD
-  inputAction[Input action_id] --> validateAction[ValidateAction]
-  validateAction --> applyAction[ApplyActionDelta]
-  applyAction --> updateStreak[UpdateActionStreak]
-  updateStreak --> evaluateEvents[EvaluateEvents]
-  evaluateEvents --> applyEventDelta[ApplyEventDeltas]
-  applyEventDelta --> evaluateEnding[EvaluateEnding]
-  evaluateEnding --> advanceTime[AdvanceTime]
-  advanceTime --> buildStepRecord[BuildStepRecord]
-  buildStepRecord --> returnResult[ReturnStepResult]
+```text
+.haruhi_runs/<run_id>/
+  state.json
+  history.jsonl
 ```
 
-Execution order:
+`history.jsonl` 中的 `StepRecord` 包含事件列表与扰动 profile，便于回放与调参。
 
-1. Validate action ID.
-2. Apply direct action deltas.
-3. Update streak counters for repeated actions.
-4. Evaluate and apply triggered event outcomes.
-5. Evaluate ending conditions.
-6. Advance time and apply loop drift.
-7. Build and return `StepRecord`.
+## 8. 扩展建议
 
-## 6. Sequence Diagram (Command to Persistence)
+- 动作/事件/结局继续集中在 `rules.py`
+- 新机制优先放入 `systems/*`，再由 `engine.py` 编排
+- `main.py` 与 `play_app.py` 保持薄层，不承载业务规则
 
-```mermaid
-sequenceDiagram
-  participant User as User
-  participant CLI as main.py
-  participant Storage as storage.py
-  participant Engine as engine.py
-  participant Rules as rules.py
-  participant View as view.py
+## 9. 测试
 
-  User->>CLI: step --run-id R1 --action observe_anomaly
-  CLI->>Storage: load_state(R1)
-  Storage-->>CLI: GameState
-  CLI->>Storage: load_history(R1)
-  Storage-->>CLI: StepRecord[]
-  CLI->>Engine: step(state, action_id, step_number)
-  Engine->>Rules: evaluate_events(state, action)
-  Rules-->>Engine: EventOutcome[]
-  Engine->>Rules: evaluate_ending(state)
-  Rules-->>Engine: Ending or None
-  Engine-->>CLI: StepResult
-  CLI->>Storage: append_history(R1, record)
-  CLI->>Storage: save_state(state)
-  CLI->>View: render_step(record)
-  CLI->>View: render_state(state, actions)
-  View-->>User: Updated panel/table output
-```
+当前覆盖重点：
 
-## 7. Rule System and Extensibility
+- 引擎确定性与动作解析（`tests/test_engine.py`）
+- 结局可达性（`tests/test_endings.py`）
+- v0.3 子系统（`tests/test_systems_v03.py`）
+- 扰动与校验（`tests/test_mutator.py`）
 
-`rules.py` uses a “table + evaluator” pattern:
-
-- `ACTIONS`: table-driven action definitions.
-- `evaluate_events(state, action)`: dynamic event trigger function.
-- `evaluate_ending(state)`: centralized ending evaluator.
-
-Current examples:
-
-- Repetition pressure: `boredom_spike`
-- End-of-day drift: `day_end_drift`
-- Instability trigger: `closed_space`
-- Recovery branch: `closed_space_stabilized`
-
-Current endings:
-
-- `haruhi_happy_new_world`
-- `kyon_breaks_loop`
-- `shinirappears_unstable_world`
-
-Extension strategy:
-
-- Add new endings through `flags + threshold` combinations.
-- Build multi-stage narrative chains by emitting and consuming flags.
-
-## 8. CLI Command Surface
-
-Commands in `main.py`:
-
-- `start`: initialize a new run and persist initial state.
-- `step --run-id --action`: execute one step and append history.
-- `status --run-id`: print current state and action list.
-- `history --run-id [--last N]`: inspect recent decision chain.
-- `replay --run-id`: replay trajectory and print summary reason.
-- `simulate --runs --max-steps --policy`: batch strategy simulation.
-
-Command-layer principle:
-
-- CLI orchestrates only; business rules stay in `engine + rules`.
-
-## 9. Persistence and Replay
-
-Per-run storage path: `.haruhi_runs/<run_id>/`
-
-- `state.json`: latest snapshot (overwrite)
-- `history.jsonl`: append-only step stream
-
-Benefits:
-
-- Fast status loading from `state.json`
-- Full replay from `history.jsonl`
-- Easy side-by-side comparison between strategies and parameter sets
-
-## 10. Strategy Interface and RL Hook
-
-`policy.py` defines the `Policy` protocol:
-
-- Input: `state`, `actions`, `history`
-- Output: chosen `action_id`
-
-Built-in implementations:
-
-- `RandomPolicy`: baseline random behavior
-- `GreedyPolicy`: simple heuristic policy
-
-Future RL path:
-
-1. Add `RLPolicy` that satisfies the same protocol.
-2. Wire `--policy rl` in `simulate`.
-3. Keep training offline and inference online in CLI without architecture changes.
-
-## 11. Testing Approach
-
-Validation targets:
-
-- Determinism: same action sequence -> same trajectory.
-- Trigger correctness: low stability can trigger Closed Space.
-- Ending reachability: all three endings can be reached in tests.
-
-Test files:
-
-- `tests/test_engine.py`
-- `tests/test_endings.py`
-
-Run command:
+运行：
 
 ```bash
 uv run pytest -q
 ```
-
-## 12. Suggested Next Iterations
-
-- Externalize actions/events/endings into JSON or YAML configs.
-- Add parameter presets for demo-time difficulty switching.
-- Add replay “milestone” highlighting (first Closed Space, first key flag).
-- Keep engine/rules unchanged before introducing TUI to avoid UI-driven coupling.
-

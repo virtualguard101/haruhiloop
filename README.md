@@ -9,63 +9,75 @@ A time-loop command-line simulator inspired by "The Endless August" from The Mel
 
 </div>
 
-Inspired by the "Endless August" motif from *The Melancholy of Haruhi Suzumiya*, this CLI simulates a time-loop scenario where the main character, Haruhi Suzumiya, repeatedly experiences the same day. The simulation is deterministic in `v0`: the same initial state and action sequence always yields the same outcome.
+This project currently provides both:
 
-**Locale**: In-repo UX defaults to **Simplified Chinese** (panels, action names, Typer help). Internal keys in saves (`flags`, `ending_id`, etc.) stay ASCII for stability.
+- a Typer-based CLI (`haruhi`)
+- a Textual keyboard UI (`haruhi-play`)
 
-See [README_zh-CN.md](README_zh-CN.md) for the canonical CLI examples and action list.
-
-## Story-driven gameplay
-
-- **Endless Eight loop pressure**: each cycle repeats a summer day split into `morning`, `afternoon`, and `evening`.
-- **Haruhi's emotional influence**: `satisfaction` models mood; boredom feeds instability.
-- **Closed Space escalation**: low `stability` can trigger Closed Space events.
-- **Kyon-style subtle intervention**: break the loop through small, cumulative choices.
-- **Alternative worldlines**: new worldline, loop break, or collapse ending.
+The loop is state-driven and replayable. In deterministic mode, the same initial state plus the same action sequence yields the same result.
 
 ## Gameplay model
 
-Each run tracks `loop_count`, `satisfaction`, `stability`, `clue_points`, and narrative `flags`.
+Each run tracks:
 
-## Quick start (uv)
+- base: `day`, `timeslot(morning/afternoon/evening)`, `loop_count`, `satisfaction`, `stability`, `clue_points`, `flags`
+- v0.3 systems: `homework_progress`, `crew_sync`, `closed_space_stage`, `memory_residue`
+- merged storyline: `nagato_fatigue`, `ending_epilogue`
+- v0.4 mutator: `mutator_mode`, `worldline_mutation_profile`
+
+## Quick start
 
 ```bash
 uv sync --extra dev
 uv run haruhi start
+uv run haruhi-play
 ```
 
-`start` prints a short intro, then the state panel and a **run id** to reuse.
+Without `uv`:
 
-Without `uv`: `pip install -e ".[dev]"`, then run `haruhi`.
+```bash
+pip install -e ".[dev]"
+haruhi --help
+haruhi-play
+```
 
-## Core commands (positional)
+## Core CLI commands
 
 Replace `RUN` with your run id.
 
 ```bash
 uv run haruhi start
-uv run haruhi start RUN              # optional custom id
+uv run haruhi start RUN
+uv run haruhi start --mutator-mode ai --seed 42 --ai-temperature 0.9
 
-uv run haruhi step RUN 3             # second arg: index 1–8
-uv run haruhi step RUN 观察异常       # or full Chinese action id
+uv run haruhi step RUN 3
+uv run haruhi step RUN 向长门核对异常
+uv run haruhi step RUN 观察异常
 
 uv run haruhi status RUN
 uv run haruhi history RUN --last 10
 uv run haruhi replay RUN
 uv run haruhi simulate --runs 100 --max-steps 30 --policy greedy
+uv run haruhi simulate --runs 100 --policy random --mutator-mode ai --seed 7
 ```
 
-Eight actions are numbered 1–8 in the panel; IDs are Chinese phrases (see README_zh-CN).
+Note: `观察异常` and `整合线索` remain supported as compatibility aliases.
 
 ## Endings (internal ids)
 
+- `nagato_collapse`
 - `haruhi_happy_new_world`
+- `consensus_paradise`
 - `kyon_breaks_loop`
+- `meltdown_pact`
+- `hollow_celebration`
+- `archive_bound`
+- `observer_bailout`
 - `shinirappears_unstable_world`
 
 ## Persistence
 
-`.haruhi_runs/<run_id>/` with `state.json` and `history.jsonl` (relative to the working directory).
+`.haruhi_runs/<run_id>/` with `state.json` and `history.jsonl`.
 
 ## Run tests
 

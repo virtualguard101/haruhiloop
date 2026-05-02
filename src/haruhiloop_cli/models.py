@@ -18,6 +18,7 @@ class Action:
     delta_satisfaction: int = 0
     delta_stability: int = 0
     delta_clue_points: int = 0
+    delta_nagato_fatigue: int = 0
     add_flags: tuple[str, ...] = ()
 
 
@@ -49,8 +50,35 @@ class GameState:
     clue_points: int = 0
     closed_space_count: int = 0
     worldline_shift: int = 0
+    homework_progress: int = 0
+    homework_parts_done: list[str] = field(default_factory=list)
+    crew_sync: int = 45
+    member_trust: dict[str, int] = field(
+        default_factory=lambda: {
+            "kyon": 55,
+            "yuki": 50,
+            "mikuru": 45,
+            "koizumi": 48,
+        }
+    )
+    closed_space_stage: int = 0
+    memory_residue: dict[str, int] = field(
+        default_factory=lambda: {"clue_efficiency": 0, "sync_recovery": 0}
+    )
+    mutator_mode: str = "deterministic"
+    random_seed: int | None = None
+    ai_temperature: float = 0.7
+    worldline_mutation_profile: dict[str, float] = field(
+        default_factory=lambda: {
+            "satisfaction_factor": 1.0,
+            "stability_factor": 1.0,
+            "clue_factor": 1.0,
+        }
+    )
+    nagato_fatigue: int = 0
     ending_id: str | None = None
     ending_title: str | None = None
+    ending_epilogue: str | None = None
     flags: set[str] = field(default_factory=set)
     recent_actions: list[str] = field(default_factory=list)
     current_action_streak: int = 0
@@ -67,6 +95,7 @@ class GameState:
     def snapshot(self) -> dict[str, Any]:
         data = asdict(self)
         data["flags"] = sorted(self.flags)
+        data["homework_parts_done"] = sorted(self.homework_parts_done)
         data["timeslot"] = self.timeslot
         return data
 
@@ -74,7 +103,32 @@ class GameState:
     def from_dict(cls, data: dict[str, Any]) -> "GameState":
         parsed = dict(data)
         parsed["flags"] = set(parsed.get("flags", []))
+        parsed["homework_parts_done"] = list(parsed.get("homework_parts_done", []))
+        parsed["member_trust"] = {
+            "kyon": 55,
+            "yuki": 50,
+            "mikuru": 45,
+            "koizumi": 48,
+            **dict(parsed.get("member_trust", {})),
+        }
+        parsed["memory_residue"] = {
+            "clue_efficiency": 0,
+            "sync_recovery": 0,
+            **dict(parsed.get("memory_residue", {})),
+        }
+        parsed["worldline_mutation_profile"] = dict(
+            parsed.get(
+                "worldline_mutation_profile",
+                {
+                    "satisfaction_factor": 1.0,
+                    "stability_factor": 1.0,
+                    "clue_factor": 1.0,
+                },
+            )
+        )
         parsed.pop("timeslot", None)
+        parsed.setdefault("ending_epilogue", None)
+        parsed.setdefault("nagato_fatigue", 0)
         return cls(**parsed)
 
 
@@ -88,6 +142,7 @@ class StepRecord:
     before: dict[str, Any]
     after: dict[str, Any]
     events: list[str]
+    mutation_profile: dict[str, float] | None = None
     ending_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:

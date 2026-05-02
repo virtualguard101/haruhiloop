@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from haruhiloop_cli.models import Action, Ending, EventOutcome, GameState
+from haruhiloop_cli.ending_epilogues import epilogue_for
 
 # Table-driven action definitions keep content extensible.
 # 键与 action_id 均为中文标识（展示与 CLI 序号 1–N 对应）。
@@ -18,20 +19,22 @@ ACTIONS: dict[str, Action] = {
         delta_satisfaction=3,
         delta_stability=-2,
     ),
-    "观察异常": Action(
-        action_id="观察异常",
-        label="观察异常",
-        description="留意违和之处与时间循环的痕迹。",
+    "向长门核对异常": Action(
+        action_id="向长门核对异常",
+        label="向长门核对异常",
+        description="把违和感与循环征兆交给长门交叉验证；她话少，但每次确认都在消耗她的演算余量。",
         delta_clue_points=3,
         delta_stability=-3,
+        delta_nagato_fatigue=10,
         add_flags=("anomaly_seen",),
     ),
-    "整合线索": Action(
-        action_id="整合线索",
-        label="整合线索",
-        description="核对传闻并把重复出现的细节串起来。",
+    "向长门借资料": Action(
+        action_id="向长门借资料",
+        label="向长门借资料",
+        description="从她那借走大段索引与旁证；资料越厚，她背后要压制的噪声越多。",
         delta_clue_points=4,
         delta_satisfaction=-1,
+        delta_nagato_fatigue=16,
         add_flags=("clue_chain_started",),
     ),
     "策划惊喜活动": Action(
@@ -48,7 +51,6 @@ ACTIONS: dict[str, Action] = {
         description="写完暑期作业，消解悬而未决的遗憾。",
         delta_satisfaction=2,
         delta_stability=4,
-        add_flags=("homework_done",),
     ),
     "同步循环真相": Action(
         action_id="同步循环真相",
@@ -69,6 +71,10 @@ ACTIONS: dict[str, Action] = {
 }
 
 ORDERED_ACTION_IDS: tuple[str, ...] = tuple(ACTIONS.keys())
+ACTION_ALIASES: dict[str, str] = {
+    "观察异常": "向长门核对异常",
+    "整合线索": "向长门借资料",
+}
 
 
 def resolve_action_ref(token: str) -> str:
@@ -79,6 +85,8 @@ def resolve_action_ref(token: str) -> str:
         if 1 <= i <= len(ORDERED_ACTION_IDS):
             return ORDERED_ACTION_IDS[i - 1]
         raise ValueError(f"序号须在 1–{len(ORDERED_ACTION_IDS)} 之间：{t}")
+    if t in ACTION_ALIASES:
+        return ACTION_ALIASES[t]
     if t in ACTIONS:
         return t
     raise ValueError(f"未知动作：{t}")
@@ -121,31 +129,21 @@ def evaluate_events(state: GameState, action: Action) -> list[EventOutcome]:
             )
         )
 
-    if state.stability <= 35:
+    if action.action_id == "同步循环真相" and state.crew_sync < 55:
         outcomes.append(
             EventOutcome(
-                event_id="closed_space",
-                description="闭锁空间显现，现实结构开始动摇。",
-                delta_stability=-8,
-                delta_satisfaction=-4,
-                add_flags=("closed_space_active",),
+                event_id="sync_without_alignment",
+                description="团员协同不足，同步真相并未形成稳定合力。",
+                delta_stability=-2,
+                delta_satisfaction=-1,
             )
         )
-        if action.action_id in {"安抚春日", "同步循环真相"}:
-            outcomes.append(
-                EventOutcome(
-                    event_id="closed_space_stabilized",
-                    description="众人默契配合，暂时压住了崩坏。",
-                    delta_stability=8,
-                    delta_satisfaction=3,
-                    add_flags=("closed_space_resolved",),
-                )
-            )
 
     if (
         action.action_id == "策划惊喜活动"
         and "homework_done" in state.flags
         and "truth_shared" in state.flags
+        and state.crew_sync >= 60
     ):
         outcomes.append(
             EventOutcome(
@@ -162,33 +160,110 @@ def evaluate_events(state: GameState, action: Action) -> list[EventOutcome]:
 
 
 def evaluate_ending(state: GameState) -> Ending | None:
+    """多结局按「先验更窄、后验更宽」排序；不必对应原作，偏群像科幻寓言。"""
+
+    # 长门疲劳崩坏优先：再高的表面分数也挡不住这条暗线。
+    if state.nagato_fatigue >= 88:
+        return Ending(
+            ending_id="nagato_collapse",
+            title="长门有希的崩坏",
+            description=epilogue_for("nagato_collapse"),
+        )
+
+    # —— 理想侧 ——
     if (
         state.satisfaction >= 85
         and state.clue_points >= 10
         and {"festival_plan", "homework_done", "truth_shared"}.issubset(state.flags)
+        and state.crew_sync >= 65
     ):
         return Ending(
             ending_id="haruhi_happy_new_world",
-            title="春日满足的新世界线",
-            description="春日得到回应，世界线转向更明亮的未来。",
+            title="晴空下的新周目",
+            description=epilogue_for("haruhi_happy_new_world"),
+        )
+
+    if (
+        state.satisfaction >= 68
+        and state.stability >= 52
+        and state.clue_points >= 9
+        and {"hope_signal", "truth_shared", "homework_done"}.issubset(state.flags)
+    ):
+        return Ending(
+            ending_id="consensus_paradise",
+            title="共识温室",
+            description=epilogue_for("consensus_paradise"),
         )
 
     if (
         state.clue_points >= 12
         and {"anomaly_seen", "homework_done", "truth_shared"}.issubset(state.flags)
         and state.stability >= 45
+        and state.crew_sync >= 55
     ):
         return Ending(
             ending_id="kyon_breaks_loop",
-            title="阿虚打破无尽八月",
-            description="细小改变的累积终于对齐，循环被切开。",
+            title="切口与回声",
+            description=epilogue_for("kyon_breaks_loop"),
         )
 
-    if state.stability <= 0 or (state.satisfaction <= 5 and state.closed_space_count >= 2):
+    # —— 代价侧 / 灰线 ——
+    if (
+        "truth_shared" in state.flags
+        and state.stability <= 20
+        and state.satisfaction >= 38
+        and state.closed_space_count >= 1
+    ):
+        return Ending(
+            ending_id="meltdown_pact",
+            title="真相暴晒协议",
+            description=epilogue_for("meltdown_pact"),
+        )
+
+    if (
+        "festival_plan" in state.flags
+        and "truth_shared" not in state.flags
+        and state.satisfaction >= 76
+        and state.clue_points <= 7
+    ):
+        return Ending(
+            ending_id="hollow_celebration",
+            title="空洞庆典",
+            description=epilogue_for("hollow_celebration"),
+        )
+
+    if (
+        state.clue_points >= 16
+        and 0 < state.stability <= 38
+        and {"anomaly_seen", "clue_chain_started", "truth_shared"}.issubset(state.flags)
+    ):
+        return Ending(
+            ending_id="archive_bound",
+            title="归档囚徒",
+            description=epilogue_for("archive_bound"),
+        )
+
+    if (
+        state.worldline_shift >= 48
+        and state.clue_points >= 9
+        and state.satisfaction <= 52
+        and "anomaly_seen" in state.flags
+    ):
+        return Ending(
+            ending_id="observer_bailout",
+            title="观测者脱钩",
+            description=epilogue_for("observer_bailout"),
+        )
+
+    if (
+        state.stability <= 0
+        or state.closed_space_stage >= 3
+        or (state.satisfaction <= 5 and state.closed_space_count >= 2)
+    ):
         return Ending(
             ending_id="shinirappears_unstable_world",
-            title="神人于闭锁中出现",
-            description="挫败撕裂现实，异常巨大的存在显现其中。",
+            title="结构体崩解",
+            description=epilogue_for("shinirappears_unstable_world"),
         )
 
     return None
