@@ -48,6 +48,25 @@ EVENT_NAMES_ZH: dict[str, str] = {
     "closed_space_stage": "闭锁空间危机阶段",
     "closed_space_countermeasure": "闭锁空间应对",
     "hope_signal": "希望信号",
+    "crew_sync_breakthrough": "团员协同突破",
+    "crew_sync_friction": "团员协同摩擦",
+}
+
+HOMEWORK_PART_LABELS: dict[str, str] = {
+    "worksheet": "习题演算",
+    "essay": "读书笔记",
+    "submission": "集中提交",
+}
+
+MUTATOR_MODE_LABELS: dict[str, str] = {
+    "ai": "AI 扰动",
+    "deterministic": "确定性",
+}
+
+MUTATION_PROFILE_KEY_LABELS: dict[str, str] = {
+    "satisfaction_factor": "情绪系数",
+    "stability_factor": "稳定系数",
+    "clue_factor": "线索系数",
 }
 
 
@@ -57,15 +76,25 @@ def format_timeslot(timeslot: str) -> str:
 
 def format_flags(flags: set[str] | list[str]) -> str:
     items = sorted(flags)
-    return ", ".join(FLAG_LABELS.get(f, f) for f in items)
+    return ", ".join(FLAG_LABELS.get(f, f"未登记标记（{f}）") for f in items)
+
+
+def format_homework_parts(part_ids: list[str]) -> str:
+    return "、".join(HOMEWORK_PART_LABELS.get(p, p) for p in part_ids)
+
+
+def format_mutator_mode(mode: str) -> str:
+    return MUTATOR_MODE_LABELS.get(mode, mode)
 
 
 def format_event_line(event: EventOutcome) -> str:
-    name = EVENT_NAMES_ZH.get(event.event_id, event.event_id)
+    name = EVENT_NAMES_ZH.get(event.event_id, f"未登记事件（{event.event_id}）")
     return f"{name}：{event.description}"
 
 
 def format_ending_summary(ending_id: str | None) -> str:
     if not ending_id:
         return ENDING_SUMMARY_LABELS["unknown"]
-    return ENDING_SUMMARY_LABELS.get(ending_id, ending_id)
+    if ending_id in ENDING_SUMMARY_LABELS:
+        return ENDING_SUMMARY_LABELS[ending_id]
+    return f"未登记结局（{ending_id}）"

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from haruhiloop_cli.models import Action, Ending, GameState, StepRecord, TIMESLOTS, clamp
-from haruhiloop_cli import i18n, rules
+from haruhiloop_cli import action_flavor_zh, i18n, rules
 from haruhiloop_cli.mutator import build_mutator, validate_profile
 from haruhiloop_cli.systems.closed_space import evaluate_closed_space_stage
 from haruhiloop_cli.systems.crew import apply_crew_sync
@@ -43,7 +43,8 @@ class GameEngine:
 
     def step(self, state: GameState, action_id: str, step_number: int) -> StepResult:
         if state.is_finished:
-            raise ValueError(f"本局已结束，结局：{state.ending_id}")
+            label = i18n.format_ending_summary(state.ending_id)
+            raise ValueError(f"本局已结束，结局：{label}")
 
         action = rules.ACTIONS.get(action_id)
         if action is None:
@@ -61,6 +62,10 @@ class GameEngine:
         state.nagato_fatigue = clamp(state.nagato_fatigue + action.delta_nagato_fatigue)
         state.flags.update(action.add_flags)
         self._update_streak(state, action_id)
+        state.action_counts[action_id] = state.action_counts.get(action_id, 0) + 1
+        for category_id in rules.action_categories_for(action_id):
+            state.category_counts[category_id] = state.category_counts.get(category_id, 0) + 1
+        action_flavor = action_flavor_zh.pick_action_flavor(state, action_id, step_number)
         state.recent_actions.append(action_id)
         state.recent_actions = state.recent_actions[-8:]
         state.worldline_shift += abs(action.delta_satisfaction) + abs(action.delta_clue_points)
@@ -100,6 +105,7 @@ class GameEngine:
             events=event_labels,
             mutation_profile=dict(profile),
             ending_id=state.ending_id,
+            action_flavor=action_flavor,
         )
         return StepResult(state=state, record=record, action=action, events=event_labels, ending=ending)
 
