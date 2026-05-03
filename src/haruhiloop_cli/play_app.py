@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 import uuid
 
 from rich.align import Align
 from rich.console import Group
+from rich.markup import escape
 from rich.panel import Panel
+from rich.text import Text
 
 from textual import events
 from textual.app import App, ComposeResult
@@ -23,13 +26,28 @@ from haruhiloop_cli.ending_conditions_zh import DISPLAY_FOR_CHEAT
 _CHEAT_CODE = "kyon"
 _TUI_DEFAULT_MUTATOR_MODE = "ai"
 _TUI_DEFAULT_AI_TEMPERATURE = 1.5
-_ENTRY_ASCII = """\
- _   _    _    ____  _   _ _   _ ___ _     ___   ___  ____  
-| | | |  / \  |  _ \| | | | | | |_ _| |   / _ \ / _ \|  _ \ 
-| |_| | / _ \ | |_) | | | | |_| || || |  | | | | | | | |_) |
-|  _  |/ ___ \|  _ <| |_| |  _  || || |__| |_| | |_| |  __/ 
-|_| |_/_/   \_\_| \_\\___/|_| |_|___|_____\___/ \___/|_|    
-"""
+_ENTRY_ASCII_FALLBACK = "\n".join(
+    [
+        " _   _    _    ____  _   _ _   _ ___ _     ___   ___  ____  ",
+        "| | | |  / \\  |  _ \\| | | | | | |_ _| |   / _ \\ / _ \\|  _ \\ ",
+        "| |_| | / _ \\ | |_) | | | | |_| || || |  | | | | | | | |_) |",
+        "|  _  |/ ___ \\|  _ <| |_| |  _  || || |__| |_| | |_| |  __/ ",
+        "|_| |_/_/   \\_\\_| \\_\\\\___/|_| |_|___|_____\\___/ \\___/|_|    ",
+    ]
+)
+_ENTRY_ASCII_PATH = Path(__file__).resolve().parents[1] / "assets" / "haruhi_ascii.txt"
+
+
+def _load_entry_ascii() -> str:
+    """Load entry art from scripts directory; fallback to built-in title."""
+    try:
+        art = _ENTRY_ASCII_PATH.read_text(encoding="utf-8").strip("\n")
+    except OSError:
+        return _ENTRY_ASCII_FALLBACK
+    return art or _ENTRY_ASCII_FALLBACK
+
+
+_ENTRY_ASCII = _load_entry_ascii()
 
 _HELP_BODY = """\
 [bold]数字键 1–9[/bold]  先选场景，再选该场景下的选项
@@ -273,16 +291,41 @@ class HaruhiPlayApp(App[None]):
         self.sub_title = f"运行 {self.run_id} | 视图 {_view_mode_label(self._view_mode)}"
 
     def _entry_panel(self) -> Panel:
-        body = (
-            f"[cyan]{_ENTRY_ASCII}[/cyan]\n"
-            "[bold]无尽八月循环模拟器[/bold]\n"
-            # TODO: 后续可在此扩展字符艺术、动态标题、主题切换与存档入口
-            "[bold]1[/bold] 开始新局\n"
-            "[bold]2[/bold] 查看帮助\n"
-            "[bold]3[/bold] 退出\n"
-            "[dim]也可直接按 Enter 开始。[/dim]"
+        entry_ascii = escape(_ENTRY_ASCII)
+        logo_ascii = escape(_ENTRY_ASCII_FALLBACK)
+        menu_lines = [
+            "[black on bright_cyan] 1 [/black on bright_cyan] [bold bright_white]开始新局[/bold bright_white] [dim]NEW LOOP[/dim]",
+            "[black on bright_magenta] 2 [/black on bright_magenta] [bold bright_white]查看帮助[/bold bright_white] [dim]SYSTEM[/dim]",
+            "[black on grey70] 3 [/black on grey70] [bold bright_white]退出游戏[/bold bright_white] [dim]LEAVE[/dim]",
+        ]
+        sss_header = "[bold bright_yellow]★ SOS 团 · 特别活动室终端 ★[/bold bright_yellow]"
+        gal_divider = "[bright_blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bright_blue]"
+        catch_copy_jp = "[italic bright_magenta]「ただの人間には興味ありません。」[/italic bright_magenta]"
+        catch_copy_zh = "[dim]如果你是外星人、未来人、异世界人或超能力者，就来找我吧。[/dim]"
+        menu_frame_top = "[bright_cyan]┏━━━━━━━━━━[/bright_cyan][bold] MAIN MENU [/bold][bright_cyan]━━━━━━━━━━┓[/bright_cyan]"
+        menu_frame_bottom = "[bright_cyan]┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛[/bright_cyan]"
+        body = Group(
+            Align.center(Text.from_markup(f"[cyan]{entry_ascii}[/cyan]", justify="center")),
+            Align.center(Text.from_markup(f"[cyan]{logo_ascii}[/cyan]", justify="center")),
+            Align.center(Text.from_markup(sss_header, justify="center")),
+            Align.center(Text.from_markup(gal_divider, justify="center")),
+            Align.center(Text.from_markup("[bold]无尽八月循环模拟器[/bold]", justify="center")),
+            Align.center(Text.from_markup(catch_copy_jp, justify="center")),
+            Align.center(Text.from_markup(catch_copy_zh, justify="center")),
+            Align.center(Text.from_markup("", justify="center")),
+            Align.center(Text.from_markup(menu_frame_top, justify="center")),
+            Align.center(Text.from_markup(menu_lines[0], justify="center")),
+            Align.center(Text.from_markup(menu_lines[1], justify="center")),
+            Align.center(Text.from_markup(menu_lines[2], justify="center")),
+            Align.center(Text.from_markup(menu_frame_bottom, justify="center")),
+            Align.center(
+                Text.from_markup(
+                    "[dim]也可直接按 Enter 开始（重复的夏天将再次启动）。[/dim]",
+                    justify="center",
+                )
+            ),
         )
-        return Panel(Align.center(body), title="Haruhi Loop", border_style="cyan")
+        return Panel(body, title="Haruhi Loop · Endless August", border_style="bright_cyan")
 
     def _refresh_main(self) -> None:
         if self._screen_mode == "entry":
