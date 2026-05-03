@@ -28,6 +28,7 @@ TUI 与 CLI 共用同一引擎与存档：
 | `1-8` | 预选动作序号（表格高亮） |
 | `Enter` | 执行当前预选 |
 | `n` | 新开一局 |
+| `v` | 切换视图（混合叙事 / 详细数值） |
 | `h` | 帮助面板开关 |
 | `q` | 退出 |
 
@@ -70,6 +71,7 @@ TUI 与 CLI 共用同一引擎与存档：
 - `make_worldline_status_panel`
 - `make_classic_quote_panel`
 - `make_metric_table`
+- `make_metric_table_hybrid`
 - `make_action_table`
 - `make_step_panel`
 
@@ -84,3 +86,9 @@ TUI 与 CLI 共用同一引擎与存档：
 - 引擎每步可写入 `StepRecord.action_flavor`，`make_step_panel` 会插在「动作」与数值变化之间。
 - **常规**：8 动作各 10 条；**特殊**：终盘/关键节点命中 **群像碎片**（`人名｜` 短句五行，优先级最高）；其次长门疲劳 ≥80 核对/借资料 **`长门：`**；协同过低或世界线过高时社团 **`朝比奈：`**；高压时 **阿虚「」独白**（三档）。
 - 详见 **[action-flavor-memo.md](./action-flavor-memo.md)**；**文案仍可继续优化**（语气、长度、触发条件与池内容）。
+
+## 8) 混合叙事视图（hybrid）
+
+- 默认进入 `hybrid`：强调文字反馈与状态档位，隐藏 `worldline_shift / closed_space_stage / memory_residue / mutator` 等底层参数。
+- 关键状态以「档位 + 趋势」展示（例如：`平稳（下降）`），趋势来自上一步快照。
+- `numeric` 视图保留完整数值与精确变化（含 `A -> B`、扰动系数），便于调参与回归验证。

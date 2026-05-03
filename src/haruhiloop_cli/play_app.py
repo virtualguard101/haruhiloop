@@ -27,8 +27,17 @@ _HELP_BODY = """\
 [bold]数字键 1–8[/bold]  预选一行（表格中会反色高亮）；换数字即换高亮
 [bold]Enter[/bold]  确认执行当前预选动作
 [bold]n[/bold]  新开一局（随机运行标识）
+[bold]v[/bold]  切换视图（混合叙事 / 详细数值）
 [bold]q[/bold]  退出程序
 [bold]h[/bold]  打开/关闭帮助（再按一次关闭）"""
+
+
+def _toggle_view_mode(current: str) -> str:
+    return "numeric" if current == "hybrid" else "hybrid"
+
+
+def _view_mode_label(mode: str) -> str:
+    return "混合叙事" if mode == "hybrid" else "详细数值"
 
 
 class HaruhiPlayApp(App[None]):
@@ -45,6 +54,7 @@ class HaruhiPlayApp(App[None]):
     BINDINGS = [
         Binding("q", "quit", "退出"),
         Binding("n", "new_game", "新局"),
+        Binding("v", "toggle_view_mode", "视图"),
         Binding("h", "toggle_help", "帮助"),
         Binding("enter", "confirm_step", "确认"),
     ]
@@ -57,7 +67,9 @@ class HaruhiPlayApp(App[None]):
         self._last_record: StepRecord | None = None
         self._welcome_done = False
         self._help_visible = False
+        self._view_mode = "hybrid"
         self._pending_index: int | None = None
+        self._previous_state_for_trend: GameState | None = None
         self._kyon_idx = 0
         self._quote_phase = 0
         self._clock_tick = 0
@@ -85,18 +97,26 @@ class HaruhiPlayApp(App[None]):
         self._last_record = None
         self._welcome_done = False
         self._help_visible = False
+        self._view_mode = "hybrid"
         self._pending_index = None
+        self._previous_state_for_trend = None
         self._kyon_idx = 0
         self._clock_tick = 0
         self._transition_frames = 0
         self._last_day = self.state.day
         self._last_loop_count = self.state.loop_count
         storage.save_state(self.state)
-        self.sub_title = f"运行 {self.run_id}"
+        self._refresh_subtitle()
         self._refresh_main()
 
     def action_toggle_help(self) -> None:
         self._help_visible = not self._help_visible
+        self._refresh_main()
+
+    def action_toggle_view_mode(self) -> None:
+        self._view_mode = _toggle_view_mode(self._view_mode)
+        self._refresh_subtitle()
+        self.notify(f"已切换为{_view_mode_label(self._view_mode)}视图", timeout=2.5)
         self._refresh_main()
 
     def action_confirm_step(self) -> None:
@@ -130,11 +150,13 @@ class HaruhiPlayApp(App[None]):
         step_no = len(history) + 1
         prev_day = self.state.day
         prev_loop_count = self.state.loop_count
+        previous_state = GameState.from_dict(self.state.snapshot())
         try:
             result = self.engine.step(self.state, action_id, step_no)
         except ValueError as exc:
             self.notify(str(exc), severity="error")
             return False
+        self._previous_state_for_trend = previous_state
         self._last_record = result.record
         self._welcome_done = True
         storage.append_history(self.run_id, result.record)
@@ -171,17 +193,25 @@ class HaruhiPlayApp(App[None]):
         body = (
             "[bold]简介[/bold]  同一天不断轮回；先按数字预选动作（反色高亮），再按 Enter 确认。\n"
             "[bold]操作[/bold]  [cyan]1–8[/cyan] 预选  ·  [cyan]Enter[/cyan] 确认  ·  [cyan]n[/cyan] 新局  ·  "
-            "[cyan]q[/cyan] 退出  ·  [cyan]h[/cyan] 帮助\n"
+            "[cyan]v[/cyan] 视图切换  ·  [cyan]q[/cyan] 退出  ·  [cyan]h[/cyan] 帮助\n"
             "[dim]方向键等扩展可在后续版本加入。[/dim]"
         )
         return Panel(body.strip(), title="开局说明", border_style="cyan")
 
     def _help_panel(self) -> Panel:
+        body = f"""\
+{_HELP_BODY}
+
+[bold]当前视图[/bold]  {_view_mode_label(self._view_mode)}
+[dim]混合叙事：隐藏底层系统参数，只显示档位与趋势；详细数值：完整指标与精确变化。[/dim]"""
         return Panel(
-            _HELP_BODY.strip(),
+            body.strip(),
             title="帮助",
             border_style="magenta",
         )
+
+    def _refresh_subtitle(self) -> None:
+        self.sub_title = f"运行 {self.run_id} | 视图 {_view_mode_label(self._view_mode)}"
 
     def _refresh_main(self) -> None:
         if self.state is None:
@@ -201,8 +231,11 @@ class HaruhiPlayApp(App[None]):
         if not self._welcome_done:
             parts.append(self._welcome_panel())
         if self._last_record is not None:
-            parts.append(view.make_step_panel(self._last_record))
-        parts.append(view.make_metric_table(self.state))
+            parts.append(view.make_step_panel(self._last_record, narrative_mode=self._view_mode == "hybrid"))
+        if self._view_mode == "hybrid":
+            parts.append(view.make_metric_table_hybrid(self.state, prev_state=self._previous_state_for_trend))
+        else:
+            parts.append(view.make_metric_table(self.state))
         hl = self._pending_index if not self.state.is_finished else None
         parts.append(
             view.make_action_table(

@@ -81,6 +81,68 @@ def make_metric_table(state: GameState) -> Table:
     return table
 
 
+def _trend_suffix(previous: int | None, current: int, *, show_flat: bool = False) -> str:
+    trend = i18n.format_trend(previous, current)
+    if trend == "初始":
+        return ""
+    if trend == "持平" and not show_flat:
+        return ""
+    return f"（{trend}）"
+
+
+def make_metric_table_hybrid(state: GameState, prev_state: GameState | None = None) -> Table:
+    ts = i18n.format_timeslot(state.timeslot)
+    table = Table(title=f"运行 {state.run_id} | 第 {state.day} 天 · {ts}（混合叙事）")
+    table.add_column("状态")
+    table.add_column("观察", justify="right")
+    ps = prev_state
+    table.add_row(
+        "循环周目",
+        f"第 {state.loop_count} 周目{_trend_suffix(ps.loop_count if ps else None, state.loop_count)}",
+    )
+    table.add_row(
+        "春日状态",
+        f"{i18n.band_satisfaction(state.satisfaction)}"
+        f"{_trend_suffix(ps.satisfaction if ps else None, state.satisfaction)}",
+    )
+    table.add_row(
+        "世界状态",
+        f"{i18n.band_stability(state.stability)}"
+        f"{_trend_suffix(ps.stability if ps else None, state.stability)}",
+    )
+    table.add_row(
+        "线索推进",
+        f"{i18n.band_clue_progress(state.clue_points)}"
+        f"{_trend_suffix(ps.clue_points if ps else None, state.clue_points)}",
+    )
+    table.add_row(
+        "团员协同",
+        f"{i18n.band_crew_sync(state.crew_sync)}"
+        f"{_trend_suffix(ps.crew_sync if ps else None, state.crew_sync)}",
+    )
+    table.add_row(
+        "长门状态",
+        f"{i18n.band_nagato_fatigue(state.nagato_fatigue)}"
+        f"{_trend_suffix(ps.nagato_fatigue if ps else None, state.nagato_fatigue)}",
+    )
+    table.add_row(
+        "作业进度",
+        f"{state.homework_progress}/3"
+        f"{_trend_suffix(ps.homework_progress if ps else None, state.homework_progress)}",
+    )
+    if state.homework_parts_done:
+        table.add_row("作业环节", i18n.format_homework_parts(state.homework_parts_done))
+    if state.flags:
+        table.add_row("叙事标记", i18n.format_flags(state.flags))
+    if state.is_finished:
+        zh = i18n.format_ending_summary(state.ending_id)
+        etitle = (state.ending_title or "").strip()
+        table.add_row("结局", etitle or zh)
+        if state.ending_epilogue:
+            table.add_row("结局剧情", state.ending_epilogue)
+    return table
+
+
 _ROW_HIGHLIGHT = Style(bold=True, reverse=True)
 
 
@@ -210,21 +272,48 @@ def render_state(state: GameState, actions: list[Action]) -> None:
     )
 
 
-def make_step_panel(record: StepRecord) -> Panel:
+def _narrative_change(previous: int, current: int, *, up: str, down: str, flat: str) -> str:
+    if current > previous:
+        return up
+    if current < previous:
+        return down
+    return flat
+
+
+def make_step_panel(record: StepRecord, *, narrative_mode: bool = False) -> Panel:
     lines = [
         f"动作：{record.action_id}",
     ]
     if record.action_flavor:
         lines.append(record.action_flavor.strip())
-    lines.extend(
-        [
-        f"变化 | 春日满意度：{record.before['satisfaction']} → {record.after['satisfaction']}",
-        f"变化 | 世界稳定度：{record.before['stability']} → {record.after['stability']}",
-        f"变化 | 线索点数：{record.before['clue_points']} → {record.after['clue_points']}",
-        f"变化 | 长门疲劳：{record.before.get('nagato_fatigue', 0)} → {record.after.get('nagato_fatigue', 0)}",
-        ]
-    )
-    if record.mutation_profile:
+    if narrative_mode:
+        sat_before = int(record.before.get("satisfaction", 0))
+        sat_after = int(record.after.get("satisfaction", sat_before))
+        stab_before = int(record.before.get("stability", 0))
+        stab_after = int(record.after.get("stability", stab_before))
+        clue_before = int(record.before.get("clue_points", 0))
+        clue_after = int(record.after.get("clue_points", clue_before))
+        nagato_before = int(record.before.get("nagato_fatigue", 0))
+        nagato_after = int(record.after.get("nagato_fatigue", nagato_before))
+        lines.extend(
+            [
+                "阶段变化：",
+                f"· 春日情绪：{_narrative_change(sat_before, sat_after, up='有所回升', down='明显下滑', flat='维持原状')}",
+                f"· 世界状态：{_narrative_change(stab_before, stab_after, up='趋于稳定', down='出现裂痕', flat='暂无变化')}",
+                f"· 线索推进：{_narrative_change(clue_before, clue_after, up='有新进展', down='线索受阻', flat='推进停滞')}",
+                f"· 长门负担：{_narrative_change(nagato_before, nagato_after, up='进一步加重', down='略有缓和', flat='保持不变')}",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                f"变化 | 春日满意度：{record.before['satisfaction']} → {record.after['satisfaction']}",
+                f"变化 | 世界稳定度：{record.before['stability']} → {record.after['stability']}",
+                f"变化 | 线索点数：{record.before['clue_points']} → {record.after['clue_points']}",
+                f"变化 | 长门疲劳：{record.before.get('nagato_fatigue', 0)} → {record.after.get('nagato_fatigue', 0)}",
+            ]
+        )
+    if record.mutation_profile and not narrative_mode:
         profile = record.mutation_profile
         sat_k = i18n.MUTATION_PROFILE_KEY_LABELS.get("satisfaction_factor", "情绪系数")
         stab_k = i18n.MUTATION_PROFILE_KEY_LABELS.get("stability_factor", "稳定系数")

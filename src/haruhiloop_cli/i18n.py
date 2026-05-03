@@ -98,3 +98,73 @@ def format_ending_summary(ending_id: str | None) -> str:
     if ending_id in ENDING_SUMMARY_LABELS:
         return ENDING_SUMMARY_LABELS[ending_id]
     return f"未登记结局（{ending_id}）"
+
+
+def format_trend(previous: int | None, current: int) -> str:
+    if previous is None:
+        return "初始"
+    if current > previous:
+        return "上升"
+    if current < previous:
+        return "下降"
+    return "持平"
+
+
+def band_satisfaction(value: int) -> str:
+    if value >= 80:
+        return "高涨"
+    if value >= 60:
+        return "稳定"
+    if value >= 40:
+        return "波动"
+    if value >= 20:
+        return "低迷"
+    return "危险"
+
+
+def band_stability(value: int) -> str:
+    if value >= 75:
+        return "平稳"
+    if value >= 55:
+        return "轻晃"
+    if value >= 35:
+        return "失衡"
+    if value >= 15:
+        return "濒危"
+    return "崩解边缘"
+
+
+def band_clue_progress(value: int) -> str:
+    if value >= 14:
+        return "接近真相"
+    if value >= 10:
+        return "推进明显"
+    if value >= 6:
+        return "稳步推进"
+    if value >= 3:
+        return "刚有眉目"
+    return "线索稀薄"
+
+
+def band_crew_sync(value: int) -> str:
+    if value >= 70:
+        return "高度协同"
+    if value >= 55:
+        return "配合稳定"
+    if value >= 40:
+        return "勉强对齐"
+    if value >= 25:
+        return "摩擦增加"
+    return "近乎失联"
+
+
+def band_nagato_fatigue(value: int) -> str:
+    if value >= 90:
+        return "濒临崩溃"
+    if value >= 75:
+        return "高负荷"
+    if value >= 55:
+        return "明显疲劳"
+    if value >= 30:
+        return "可见疲态"
+    return "尚可支撑"
