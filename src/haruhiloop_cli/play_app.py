@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 
+from rich.align import Align
 from rich.console import Group
 from rich.panel import Panel
 
@@ -22,6 +23,13 @@ from haruhiloop_cli.ending_conditions_zh import DISPLAY_FOR_CHEAT
 _CHEAT_CODE = "kyon"
 _TUI_DEFAULT_MUTATOR_MODE = "ai"
 _TUI_DEFAULT_AI_TEMPERATURE = 1.5
+_ENTRY_ASCII = """\
+ _   _    _    ____  _   _ _   _ ___ _     ___   ___  ____  
+| | | |  / \  |  _ \| | | | | | |_ _| |   / _ \ / _ \|  _ \ 
+| |_| | / _ \ | |_) | | | | |_| || || |  | | | | | | | |_) |
+|  _  |/ ___ \|  _ <| |_| |  _  || || |__| |_| | |_| |  __/ 
+|_| |_/_/   \_\_| \_\\___/|_| |_|___|_____\___/ \___/|_|    
+"""
 
 _HELP_BODY = """\
 [bold]数字键 1–9[/bold]  先选场景，再选该场景下的选项
@@ -81,6 +89,7 @@ class HaruhiPlayApp(App[None]):
         self._transition_frames = 0
         self._last_day = 1
         self._last_loop_count = 1
+        self._screen_mode = "entry"
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -89,7 +98,8 @@ class HaruhiPlayApp(App[None]):
 
     def on_mount(self) -> None:
         self.set_interval(0.7, self._tick_quote_phase)
-        self.action_new_game()
+        self._refresh_subtitle()
+        self._refresh_main()
 
     def action_new_game(self) -> None:
         self.run_id = uuid.uuid4().hex[:8]
@@ -113,6 +123,7 @@ class HaruhiPlayApp(App[None]):
         self._transition_frames = 0
         self._last_day = self.state.day
         self._last_loop_count = self.state.loop_count
+        self._screen_mode = "game"
         storage.save_state(self.state)
         self._refresh_subtitle()
         self._refresh_main()
@@ -136,6 +147,9 @@ class HaruhiPlayApp(App[None]):
 
     def action_confirm_step(self) -> None:
         """Enter：仅有完整场景+选项预选且本局未结束时执行一步。"""
+        if self._screen_mode == "entry":
+            self.action_new_game()
+            return
         if self._selected_scene_id is None or self._selected_choice_id is None:
             return
         if self.state is None or self.state.is_finished:
@@ -183,6 +197,20 @@ class HaruhiPlayApp(App[None]):
 
     def on_key(self, event: events.Key) -> None:
         ch = event.character
+        if self._screen_mode == "entry":
+            if ch == "1":
+                event.stop()
+                self.action_new_game()
+                return
+            if ch == "2":
+                event.stop()
+                self.action_toggle_help()
+                return
+            if ch == "3":
+                event.stop()
+                self.exit()
+                return
+            return
         if ch and ch in "123456789":
             self._kyon_idx = 0
             if self.state is None or self.state.is_finished:
@@ -239,9 +267,30 @@ class HaruhiPlayApp(App[None]):
         )
 
     def _refresh_subtitle(self) -> None:
+        if self._screen_mode == "entry":
+            self.sub_title = "入口界面 | Enter/1 开始新局"
+            return
         self.sub_title = f"运行 {self.run_id} | 视图 {_view_mode_label(self._view_mode)}"
 
+    def _entry_panel(self) -> Panel:
+        body = (
+            f"[cyan]{_ENTRY_ASCII}[/cyan]\n"
+            "[bold]无尽八月循环模拟器[/bold]\n"
+            # TODO: 后续可在此扩展字符艺术、动态标题、主题切换与存档入口
+            "[bold]1[/bold] 开始新局\n"
+            "[bold]2[/bold] 查看帮助\n"
+            "[bold]3[/bold] 退出\n"
+            "[dim]也可直接按 Enter 开始。[/dim]"
+        )
+        return Panel(Align.center(body), title="Haruhi Loop", border_style="cyan")
+
     def _refresh_main(self) -> None:
+        if self._screen_mode == "entry":
+            parts: list = [self._entry_panel()]
+            if self._help_visible:
+                parts.append(self._help_panel())
+            self.query_one("#main", Static).update(Group(*parts))
+            return
         if self.state is None:
             return
         scenes = self.engine.available_scenes(self.state)
