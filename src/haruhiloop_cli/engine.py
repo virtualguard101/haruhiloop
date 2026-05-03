@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from haruhiloop_cli.models import Action, Ending, GameState, StepRecord, TIMESLOTS, clamp
+from haruhiloop_cli.models import Ending, GameState, Scene, SceneChoice, StepCommand, StepRecord, TIMESLOTS, clamp
 from haruhiloop_cli import action_flavor_zh, i18n, rules
 from haruhiloop_cli.mutator import build_mutator, validate_profile
 from haruhiloop_cli.systems.closed_space import evaluate_closed_space_stage
@@ -15,7 +15,8 @@ from haruhiloop_cli.systems.memory import apply_memory_residue, apply_residue_de
 class StepResult:
     state: GameState
     record: StepRecord
-    action: Action
+    scene: Scene
+    choice: SceneChoice
     events: list[str]
     ending: Ending | None
 
@@ -38,17 +39,25 @@ class GameEngine:
         state.worldline_mutation_profile = self._compute_profile(state)
         return state
 
-    def available_actions(self, state: GameState) -> list[Action]:
-        return rules.get_available_actions(state)
+    def available_scenes(self, state: GameState) -> list[Scene]:
+        return rules.get_available_scenes(state)
 
-    def step(self, state: GameState, action_id: str, step_number: int) -> StepResult:
+    def available_choices(self, state: GameState, scene_id: str) -> list[SceneChoice]:
+        return rules.get_available_choices(state, scene_id)
+
+    def step(self, state: GameState, command: StepCommand, step_number: int) -> StepResult:
         if state.is_finished:
             label = i18n.format_ending_summary(state.ending_id)
             raise ValueError(f"本局已结束，结局：{label}")
 
-        action = rules.ACTIONS.get(action_id)
-        if action is None:
-            raise ValueError(f"未知动作：{action_id}")
+        scene = rules.get_scene(command.scene_id)
+        if scene is None:
+            raise ValueError(f"未知场景：{command.scene_id}")
+        if scene.scene_id not in {item.scene_id for item in self.available_scenes(state)}:
+            raise ValueError(f"当前时段不可进入场景：{command.scene_id}")
+        choice = rules.find_choice(command.scene_id, command.choice_id)
+        if choice is None:
+            raise ValueError(f"场景 {command.scene_id} 下无选项：{command.choice_id}")
 
         before = state.snapshot()
         profile = state.worldline_mutation_profile or self._compute_profile(state)
@@ -56,25 +65,29 @@ class GameEngine:
         stab_factor = profile.get("stability_factor", 1.0)
         clue_factor = profile.get("clue_factor", 1.0)
 
-        state.satisfaction = clamp(state.satisfaction + round(action.delta_satisfaction * sat_factor))
-        state.stability = clamp(state.stability + round(action.delta_stability * stab_factor))
-        state.clue_points = clamp(state.clue_points + round(action.delta_clue_points * clue_factor))
-        state.nagato_fatigue = clamp(state.nagato_fatigue + action.delta_nagato_fatigue)
-        state.flags.update(action.add_flags)
-        self._update_streak(state, action_id)
-        state.action_counts[action_id] = state.action_counts.get(action_id, 0) + 1
-        for category_id in rules.action_categories_for(action_id):
-            state.category_counts[category_id] = state.category_counts.get(category_id, 0) + 1
-        action_flavor = action_flavor_zh.pick_action_flavor(state, action_id, step_number)
-        state.recent_actions.append(action_id)
-        state.recent_actions = state.recent_actions[-8:]
-        state.worldline_shift += abs(action.delta_satisfaction) + abs(action.delta_clue_points)
+        state.satisfaction = clamp(state.satisfaction + round(choice.delta_satisfaction * sat_factor))
+        state.stability = clamp(state.stability + round(choice.delta_stability * stab_factor))
+        state.clue_points = clamp(state.clue_points + round(choice.delta_clue_points * clue_factor))
+        state.nagato_fatigue = clamp(state.nagato_fatigue + choice.delta_nagato_fatigue)
+        state.flags.update(choice.add_flags)
+        self._update_streak(state, choice.choice_id)
+        state.scene_choice_counts[choice.choice_id] = state.scene_choice_counts.get(choice.choice_id, 0) + 1
+        self._apply_route_updates(state, choice)
+        action_flavor = action_flavor_zh.pick_choice_flavor(
+            state=state,
+            scene_id=scene.scene_id,
+            choice_id=choice.choice_id,
+            step_number=step_number,
+        )
+        state.recent_choices.append(choice.choice_id)
+        state.recent_choices = state.recent_choices[-8:]
+        state.worldline_shift += abs(choice.delta_satisfaction) + abs(choice.delta_clue_points)
 
         triggered = []
-        triggered.extend(apply_homework_progress(state, action_id))
-        triggered.extend(apply_crew_sync(state, action_id))
-        triggered.extend(rules.evaluate_events(state, action))
-        triggered.extend(evaluate_closed_space_stage(state, action_id))
+        triggered.extend(apply_homework_progress(state, choice.choice_id))
+        triggered.extend(apply_crew_sync(state, choice.choice_id))
+        triggered.extend(rules.evaluate_events(state, choice))
+        triggered.extend(evaluate_closed_space_stage(state, choice.choice_id))
         triggered.extend(maybe_trigger_homework_pressure(state))
 
         inject_residue_bonus(state)
@@ -98,8 +111,10 @@ class GameEngine:
             step_number=step_number,
             day=before["day"],
             timeslot=before["timeslot"],
-            action_id=action.action_id,
-            action_label=action.label,
+            scene_id=scene.scene_id,
+            scene_label=scene.label,
+            choice_id=choice.choice_id,
+            choice_label=choice.label,
             before=before,
             after=state.snapshot(),
             events=event_labels,
@@ -107,7 +122,7 @@ class GameEngine:
             ending_id=state.ending_id,
             action_flavor=action_flavor,
         )
-        return StepResult(state=state, record=record, action=action, events=event_labels, ending=ending)
+        return StepResult(state=state, record=record, scene=scene, choice=choice, events=event_labels, ending=ending)
 
     def _compute_profile(self, state: GameState) -> dict[str, float]:
         seed = state.random_seed
@@ -126,12 +141,25 @@ class GameEngine:
             return validate_profile(fallback.mutate(state))
 
     @staticmethod
-    def _update_streak(state: GameState, action_id: str) -> None:
-        if state.previous_action == action_id:
-            state.current_action_streak += 1
+    def _update_streak(state: GameState, choice_id: str) -> None:
+        if state.previous_choice == choice_id:
+            state.current_choice_streak += 1
         else:
-            state.current_action_streak = 0
-        state.previous_action = action_id
+            state.current_choice_streak = 0
+        state.previous_choice = choice_id
+
+    @staticmethod
+    def _apply_route_updates(state: GameState, choice: SceneChoice) -> None:
+        rs = state.route_state
+        for route_id, delta in choice.route_progress.items():
+            rs.route_progress[route_id] = rs.route_progress.get(route_id, 0) + delta
+        for char_id, delta in choice.affinity_delta.items():
+            if char_id in rs.character_affinity:
+                rs.character_affinity[char_id] = clamp(rs.character_affinity[char_id] + delta)
+        if "high_risk" in choice.tags:
+            rs.route_tension = clamp(rs.route_tension + 2, low=0, high=20)
+        elif "routine" in choice.tags or "nagato_relief" in choice.tags:
+            rs.route_tension = clamp(rs.route_tension - 1, low=0, high=20)
 
     def _advance_time(self, state: GameState) -> None:
         if state.timeslot_index == len(TIMESLOTS) - 1:

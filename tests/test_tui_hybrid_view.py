@@ -59,8 +59,10 @@ def test_step_panel_splits_narrative_and_numeric_feedback():
         step_number=4,
         day=2,
         timeslot="afternoon",
-        action_id="社团活动",
-        action_label="社团活动",
+        scene_id="clubroom",
+        scene_label="活动室",
+        choice_id="group_briefing",
+        choice_label="例行集合",
         before={
             "satisfaction": 50,
             "stability": 58,

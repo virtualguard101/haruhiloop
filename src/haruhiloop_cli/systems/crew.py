@@ -3,9 +3,9 @@ from __future__ import annotations
 from haruhiloop_cli.models import EventOutcome, GameState, clamp
 
 
-def apply_crew_sync(state: GameState, action_id: str) -> list[EventOutcome]:
+def apply_crew_sync(state: GameState, choice_id: str) -> list[EventOutcome]:
     events: list[EventOutcome] = []
-    if action_id == "同步循环真相":
+    if choice_id in {"group_call_sync", "truth_discussion"}:
         if state.crew_sync >= 60:
             state.crew_sync = clamp(state.crew_sync + 4)
             _boost_members(state, 3)
@@ -28,12 +28,12 @@ def apply_crew_sync(state: GameState, action_id: str) -> list[EventOutcome]:
                     delta_stability=-2,
                 )
             )
-    elif action_id in {"整合线索", "观察异常", "向长门借资料", "向长门核对异常"}:
+    elif choice_id in {"nagato_archives", "nagato_crosscheck", "solo_trace"}:
         state.crew_sync = clamp(state.crew_sync + 2)
         _boost_members(state, 1)
-    elif action_id == "社团活动":
+    elif choice_id in {"group_briefing", "material_procurement"}:
         state.crew_sync = clamp(state.crew_sync + 1)
-    elif action_id == "策划惊喜活动":
+    elif choice_id == "surprise_pitch":
         state.crew_sync = clamp(state.crew_sync + 3)
         _boost_members(state, 2)
     return events

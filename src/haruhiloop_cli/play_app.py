@@ -1,4 +1,4 @@
-"""键盘驱动的本地感界面（Textual）：数字键预选，Enter 确认执行。"""
+"""键盘驱动的本地感界面（Textual）：先选场景，再选选项，最后确认。"""
 
 from __future__ import annotations
 
@@ -15,8 +15,8 @@ from textual.screen import ModalScreen
 from textual.widgets import Footer, Header, Static
 
 from haruhiloop_cli.engine import GameEngine
-from haruhiloop_cli.models import GameState, StepRecord
-from haruhiloop_cli import rules, storage, view
+from haruhiloop_cli.models import GameState, StepCommand, StepRecord
+from haruhiloop_cli import storage, view
 from haruhiloop_cli.ending_conditions_zh import DISPLAY_FOR_CHEAT
 
 _CHEAT_CODE = "kyon"
@@ -24,8 +24,9 @@ _TUI_DEFAULT_MUTATOR_MODE = "ai"
 _TUI_DEFAULT_AI_TEMPERATURE = 1.5
 
 _HELP_BODY = """\
-[bold]数字键 1–8[/bold]  预选一行（表格中会反色高亮）；换数字即换高亮
-[bold]Enter[/bold]  确认执行当前预选动作
+[bold]数字键 1–9[/bold]  先选场景，再选该场景下的选项
+[bold]Enter[/bold]  确认执行当前场景+选项
+[bold]r[/bold]  重置当前预选（回到选场景）
 [bold]n[/bold]  新开一局（随机运行标识）
 [bold]v[/bold]  切换视图（混合叙事 / 详细数值）
 [bold]q[/bold]  退出程序
@@ -54,6 +55,7 @@ class HaruhiPlayApp(App[None]):
     BINDINGS = [
         Binding("q", "quit", "退出"),
         Binding("n", "new_game", "新局"),
+        Binding("r", "reset_selection", "重置选择"),
         Binding("v", "toggle_view_mode", "视图"),
         Binding("h", "toggle_help", "帮助"),
         Binding("enter", "confirm_step", "确认"),
@@ -68,7 +70,10 @@ class HaruhiPlayApp(App[None]):
         self._welcome_done = False
         self._help_visible = False
         self._view_mode = "hybrid"
-        self._pending_index: int | None = None
+        self._selected_scene_id: str | None = None
+        self._selected_scene_index: int | None = None
+        self._selected_choice_id: str | None = None
+        self._selected_choice_index: int | None = None
         self._previous_state_for_trend: GameState | None = None
         self._kyon_idx = 0
         self._quote_phase = 0
@@ -98,7 +103,10 @@ class HaruhiPlayApp(App[None]):
         self._welcome_done = False
         self._help_visible = False
         self._view_mode = "hybrid"
-        self._pending_index = None
+        self._selected_scene_id = None
+        self._selected_scene_index = None
+        self._selected_choice_id = None
+        self._selected_choice_index = None
         self._previous_state_for_trend = None
         self._kyon_idx = 0
         self._clock_tick = 0
@@ -119,15 +127,22 @@ class HaruhiPlayApp(App[None]):
         self.notify(f"已切换为{_view_mode_label(self._view_mode)}视图", timeout=2.5)
         self._refresh_main()
 
+    def action_reset_selection(self) -> None:
+        self._selected_scene_id = None
+        self._selected_scene_index = None
+        self._selected_choice_id = None
+        self._selected_choice_index = None
+        self._refresh_main()
+
     def action_confirm_step(self) -> None:
-        """Enter：仅有预选且本局未结束时执行一步。"""
-        if self._pending_index is None:
+        """Enter：仅有完整场景+选项预选且本局未结束时执行一步。"""
+        if self._selected_scene_id is None or self._selected_choice_id is None:
             return
         if self.state is None or self.state.is_finished:
             return
-        idx = self._pending_index
-        if self._apply_step(idx):
-            self._pending_index = None
+        if self._apply_step(self._selected_scene_id, self._selected_choice_id):
+            self._selected_choice_id = None
+            self._selected_choice_index = None
             self._refresh_main()
             if self.state.is_finished and self.state.ending_title:
                 self.notify(
@@ -138,21 +153,20 @@ class HaruhiPlayApp(App[None]):
         else:
             self._refresh_main()
 
-    def _apply_step(self, index: int) -> bool:
+    def _apply_step(self, scene_id: str, choice_id: str) -> bool:
         """执行一步；成功返回 True，失败返回 False（预选保留）。"""
         if self.state is None:
             return False
         if self.state.is_finished:
             self.notify("本局已结束，按 n 开始新局", severity="warning")
             return False
-        action_id = rules.resolve_action_ref(str(index))
         history = storage.load_history(self.run_id)
         step_no = len(history) + 1
         prev_day = self.state.day
         prev_loop_count = self.state.loop_count
         previous_state = GameState.from_dict(self.state.snapshot())
         try:
-            result = self.engine.step(self.state, action_id, step_no)
+            result = self.engine.step(self.state, StepCommand(scene_id=scene_id, choice_id=choice_id), step_no)
         except ValueError as exc:
             self.notify(str(exc), severity="error")
             return False
@@ -169,12 +183,26 @@ class HaruhiPlayApp(App[None]):
 
     def on_key(self, event: events.Key) -> None:
         ch = event.character
-        if ch and ch in "12345678":
+        if ch and ch in "123456789":
             self._kyon_idx = 0
             if self.state is None or self.state.is_finished:
                 return
             event.stop()
-            self._pending_index = int(ch)
+            idx = int(ch)
+            if self._selected_scene_id is None:
+                scenes = self.engine.available_scenes(self.state)
+                if 1 <= idx <= len(scenes):
+                    scene = scenes[idx - 1]
+                    self._selected_scene_id = scene.scene_id
+                    self._selected_scene_index = idx
+                    self._selected_choice_id = None
+                    self._selected_choice_index = None
+            else:
+                choices = self.engine.available_choices(self.state, self._selected_scene_id)
+                if 1 <= idx <= len(choices):
+                    choice = choices[idx - 1]
+                    self._selected_choice_id = choice.choice_id
+                    self._selected_choice_index = idx
             self._refresh_main()
             return
 
@@ -191,8 +219,8 @@ class HaruhiPlayApp(App[None]):
 
     def _welcome_panel(self) -> Panel:
         body = (
-            "[bold]简介[/bold]  同一天不断轮回；先按数字预选动作（反色高亮），再按 Enter 确认。\n"
-            "[bold]操作[/bold]  [cyan]1–8[/cyan] 预选  ·  [cyan]Enter[/cyan] 确认  ·  [cyan]n[/cyan] 新局  ·  "
+            "[bold]简介[/bold]  同一天不断轮回；先选场景，再选选项，最后按 Enter 确认。\n"
+            "[bold]操作[/bold]  [cyan]1–9[/cyan] 选场景/选项  ·  [cyan]r[/cyan] 重置预选  ·  [cyan]Enter[/cyan] 确认  ·  [cyan]n[/cyan] 新局  ·  "
             "[cyan]v[/cyan] 视图切换  ·  [cyan]q[/cyan] 退出  ·  [cyan]h[/cyan] 帮助\n"
             "[dim]方向键等扩展可在后续版本加入。[/dim]"
         )
@@ -216,7 +244,24 @@ class HaruhiPlayApp(App[None]):
     def _refresh_main(self) -> None:
         if self.state is None:
             return
-        actions = self.engine.available_actions(self.state)
+        scenes = self.engine.available_scenes(self.state)
+        if self._selected_scene_id and all(s.scene_id != self._selected_scene_id for s in scenes):
+            self._selected_scene_id = scenes[0].scene_id if scenes else None
+            self._selected_scene_index = 1 if scenes else None
+            self._selected_choice_id = None
+            self._selected_choice_index = None
+        choices = self.engine.available_choices(self.state, self._selected_scene_id) if self._selected_scene_id else []
+        selected_scene_label = "—"
+        for s in scenes:
+            if s.scene_id == self._selected_scene_id:
+                selected_scene_label = s.label
+                break
+        selected_choice_label = "未选择"
+        if self._selected_choice_id:
+            for c in choices:
+                if c.choice_id == self._selected_choice_id:
+                    selected_choice_label = c.label
+                    break
         visual_state = view.build_quote_visual_state(
             self.state,
             pulse_phase=self._quote_phase,
@@ -236,13 +281,22 @@ class HaruhiPlayApp(App[None]):
             parts.append(view.make_metric_table_hybrid(self.state, prev_state=self._previous_state_for_trend))
         else:
             parts.append(view.make_metric_table(self.state))
-        hl = self._pending_index if not self.state.is_finished else None
+        breadcrumb = (
+            f"当前场景：{selected_scene_label} | "
+            f"预选选项：{selected_choice_label}"
+        )
+        parts.append(Panel(breadcrumb, title="选择状态", border_style="cyan"))
+        scene_hl = self._selected_scene_index if not self.state.is_finished else None
+        choice_hl = self._selected_choice_index if not self.state.is_finished else None
         parts.append(
-            view.make_action_table(
-                actions,
-                subtitle="（1–8 预选，Enter 确认）",
-                highlight_index=hl,
-            ),
+            view.make_scene_table(scenes, subtitle="（1–9 选择场景）", highlight_index=scene_hl),
+        )
+        parts.append(
+            view.make_choice_table(
+                choices,
+                subtitle=f"（场景：{selected_scene_label}，1–9 选择选项，Enter 确认）",
+                highlight_index=choice_hl,
+            )
         )
         if self.state.is_finished:
             parts.append(

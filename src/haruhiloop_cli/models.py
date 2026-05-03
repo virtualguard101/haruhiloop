@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any
 
 TIMESLOTS = ("morning", "afternoon", "evening")
+CURRENT_SCHEMA_VERSION = 2
 
 
 def clamp(value: int, low: int = 0, high: int = 100) -> int:
@@ -20,6 +21,53 @@ class Action:
     delta_clue_points: int = 0
     delta_nagato_fatigue: int = 0
     add_flags: tuple[str, ...] = ()
+
+
+@dataclass(slots=True)
+class SceneChoice:
+    scene_id: str
+    choice_id: str
+    label: str
+    description: str
+    delta_satisfaction: int = 0
+    delta_stability: int = 0
+    delta_clue_points: int = 0
+    delta_nagato_fatigue: int = 0
+    add_flags: tuple[str, ...] = ()
+    route_progress: dict[str, int] = field(default_factory=dict)
+    affinity_delta: dict[str, int] = field(default_factory=dict)
+    tags: tuple[str, ...] = ()
+
+
+@dataclass(slots=True)
+class Scene:
+    scene_id: str
+    label: str
+    description: str
+    timeslots: tuple[str, ...]
+    choices: tuple[SceneChoice, ...]
+
+
+@dataclass(slots=True)
+class StepCommand:
+    scene_id: str
+    choice_id: str
+
+
+@dataclass(slots=True)
+class RouteState:
+    active_route: str | None = None
+    route_progress: dict[str, int] = field(default_factory=dict)
+    character_affinity: dict[str, int] = field(
+        default_factory=lambda: {
+            "haruhi": 50,
+            "nagato": 50,
+            "mikuru": 50,
+            "koizumi": 50,
+            "kyon": 50,
+        }
+    )
+    route_tension: int = 0
 
 
 @dataclass(slots=True)
@@ -42,6 +90,7 @@ class Ending:
 @dataclass(slots=True)
 class GameState:
     run_id: str
+    schema_version: int = CURRENT_SCHEMA_VERSION
     day: int = 1
     timeslot_index: int = 0
     loop_count: int = 1
@@ -76,16 +125,16 @@ class GameState:
         }
     )
     nagato_fatigue: int = 0
-    action_counts: dict[str, int] = field(default_factory=dict)
-    category_counts: dict[str, int] = field(default_factory=dict)
-    action_flavor_recent: dict[str, tuple[int, ...]] = field(default_factory=dict)
+    route_state: RouteState = field(default_factory=RouteState)
+    scene_choice_counts: dict[str, int] = field(default_factory=dict)
+    scene_flavor_recent: dict[str, tuple[int, ...]] = field(default_factory=dict)
     ending_id: str | None = None
     ending_title: str | None = None
     ending_epilogue: str | None = None
     flags: set[str] = field(default_factory=set)
-    recent_actions: list[str] = field(default_factory=list)
-    current_action_streak: int = 0
-    previous_action: str | None = None
+    recent_choices: list[str] = field(default_factory=list)
+    current_choice_streak: int = 0
+    previous_choice: str | None = None
 
     @property
     def timeslot(self) -> str:
@@ -105,6 +154,11 @@ class GameState:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "GameState":
         parsed = dict(data)
+        schema_version = int(parsed.get("schema_version", 0))
+        if schema_version != CURRENT_SCHEMA_VERSION:
+            raise ValueError(
+                f"存档版本不兼容：{schema_version}（当前支持 {CURRENT_SCHEMA_VERSION}）。"
+            )
         parsed["flags"] = set(parsed.get("flags", []))
         parsed["homework_parts_done"] = list(parsed.get("homework_parts_done", []))
         parsed["member_trust"] = {
@@ -129,31 +183,39 @@ class GameState:
                 },
             )
         )
+        rs = parsed.get("route_state", {})
+        if isinstance(rs, RouteState):
+            parsed["route_state"] = rs
+        else:
+            rs_dict = dict(rs) if isinstance(rs, dict) else {}
+            parsed["route_state"] = RouteState(
+                active_route=rs_dict.get("active_route"),
+                route_progress=dict(rs_dict.get("route_progress", {})),
+                character_affinity={
+                    "haruhi": 50,
+                    "nagato": 50,
+                    "mikuru": 50,
+                    "koizumi": 50,
+                    "kyon": 50,
+                    **dict(rs_dict.get("character_affinity", {})),
+                },
+                route_tension=int(rs_dict.get("route_tension", 0)),
+            )
         parsed.pop("timeslot", None)
         parsed.setdefault("ending_epilogue", None)
         parsed.setdefault("nagato_fatigue", 0)
-        parsed["action_counts"] = dict(parsed.get("action_counts", {}))
-        parsed["category_counts"] = dict(parsed.get("category_counts", {}))
-        _af = parsed.get("action_flavor_recent")
+        parsed["scene_choice_counts"] = dict(parsed.get("scene_choice_counts", {}))
+        _af = parsed.get("scene_flavor_recent")
         if isinstance(_af, dict):
-            parsed["action_flavor_recent"] = {
+            parsed["scene_flavor_recent"] = {
                 str(k): tuple(int(x) for x in (v if isinstance(v, (list, tuple)) else ()))
                 for k, v in _af.items()
             }
         else:
-            parsed["action_flavor_recent"] = {}
-        _legacy = parsed.pop("club_activity_flavor_recent", None)
-        if _legacy not in (None, (), []):
-            if isinstance(_legacy, list):
-                tup = tuple(int(x) for x in _legacy)
-            elif isinstance(_legacy, tuple):
-                tup = tuple(int(x) for x in _legacy)
-            else:
-                tup = ()
-            if tup:
-                d = dict(parsed["action_flavor_recent"])
-                d.setdefault("社团活动", tup)
-                parsed["action_flavor_recent"] = d
+            parsed["scene_flavor_recent"] = {}
+        parsed["recent_choices"] = list(parsed.get("recent_choices", []))
+        parsed["current_choice_streak"] = int(parsed.get("current_choice_streak", 0))
+        parsed["previous_choice"] = parsed.get("previous_choice")
         return cls(**parsed)
 
 
@@ -162,8 +224,10 @@ class StepRecord:
     step_number: int
     day: int
     timeslot: str
-    action_id: str
-    action_label: str
+    scene_id: str
+    scene_label: str
+    choice_id: str
+    choice_label: str
     before: dict[str, Any]
     after: dict[str, Any]
     events: list[str]
@@ -177,6 +241,11 @@ class StepRecord:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "StepRecord":
         payload = dict(data)
+        if "scene_id" not in payload and "action_id" in payload:
+            payload["scene_id"] = "legacy_scene"
+            payload["scene_label"] = "旧版动作"
+            payload["choice_id"] = payload.get("action_id", "legacy_choice")
+            payload["choice_label"] = payload.get("action_label", payload["choice_id"])
         payload.setdefault("action_flavor", None)
         return cls(**payload)
 

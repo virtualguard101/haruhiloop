@@ -3,7 +3,7 @@ from __future__ import annotations
 from haruhiloop_cli.models import EventOutcome, GameState, clamp
 
 
-def evaluate_closed_space_stage(state: GameState, action_id: str) -> list[EventOutcome]:
+def evaluate_closed_space_stage(state: GameState, choice_id: str) -> list[EventOutcome]:
     outcomes: list[EventOutcome] = []
     if state.stability <= 35:
         state.closed_space_stage = min(3, state.closed_space_stage + 1)
@@ -21,7 +21,7 @@ def evaluate_closed_space_stage(state: GameState, action_id: str) -> list[EventO
             add_flags=("closed_space_active",),
         )
     )
-    if action_id in {"安抚春日", "同步循环真相"}:
+    if choice_id in {"haruhi_calm_talk", "group_call_sync", "truth_discussion"}:
         recovery = 2 + state.closed_space_stage
         outcomes.append(
             EventOutcome(
