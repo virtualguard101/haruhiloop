@@ -1,6 +1,6 @@
 from rich.console import Console
 
-from haruhiloop_cli.models import GameState, StepRecord
+from haruhiloop_cli.models import GameState, SceneChoice, StepRecord
 from haruhiloop_cli.play_app import _toggle_view_mode
 from haruhiloop_cli import i18n, view
 
@@ -100,3 +100,28 @@ def test_i18n_trend_and_band_helpers():
     assert i18n.format_trend(30, 30) == "持平"
     assert i18n.band_stability(80) == "平稳"
     assert i18n.band_stability(10) == "崩解边缘"
+
+
+def test_galgame_choice_selector_panel_shows_selected_entry():
+    choices = [
+        SceneChoice(
+            scene_id="clubroom",
+            choice_id="group_briefing",
+            label="例行集合",
+            description="统一今天计划，保持队伍基本节奏。",
+            delta_satisfaction=1,
+            delta_stability=2,
+        ),
+        SceneChoice(
+            scene_id="clubroom",
+            choice_id="surprise_pitch",
+            label="推进惊喜企划",
+            description="继续打磨夏日企划，刺激春日的兴奋感。",
+            delta_satisfaction=7,
+            delta_stability=-1,
+        ),
+    ]
+    panel_text = _render_text(view.make_choice_selector_panel(choices, scene_label="活动室", highlight_index=2))
+    assert "行动选项" in panel_text
+    assert "推进惊喜企划" in panel_text
+    assert "数字键选中，Enter 确认，r 重置" in panel_text

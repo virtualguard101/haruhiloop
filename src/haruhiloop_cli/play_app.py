@@ -289,12 +289,12 @@ class HaruhiPlayApp(App[None]):
         scene_hl = self._selected_scene_index if not self.state.is_finished else None
         choice_hl = self._selected_choice_index if not self.state.is_finished else None
         parts.append(
-            view.make_scene_table(scenes, subtitle="（1–9 选择场景）", highlight_index=scene_hl),
+            view.make_scene_selector_panel(scenes, highlight_index=scene_hl),
         )
         parts.append(
-            view.make_choice_table(
+            view.make_choice_selector_panel(
                 choices,
-                subtitle=f"（场景：{selected_scene_label}，1–9 选择选项，Enter 确认）",
+                scene_label=selected_scene_label,
                 highlight_index=choice_hl,
             )
         )
