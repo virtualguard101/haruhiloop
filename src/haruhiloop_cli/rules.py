@@ -75,6 +75,13 @@ ACTION_ALIASES: dict[str, str] = {
     "观察异常": "向长门核对异常",
     "整合线索": "向长门借资料",
 }
+NAGATO_COLLAPSE_FATIGUE_THRESHOLD = 96
+ACTION_CATEGORIES: dict[str, tuple[str, ...]] = {
+    "investigation": ("向长门核对异常", "向长门借资料"),
+    "coordination": ("同步循环真相", "安抚春日"),
+    "routine": ("老实上课", "社团活动"),
+    "breakthrough": ("策划惊喜活动", "完成暑假作业"),
+}
 
 
 def resolve_action_ref(token: str) -> str:
@@ -94,6 +101,22 @@ def resolve_action_ref(token: str) -> str:
 
 def get_available_actions(_state: GameState) -> list[Action]:
     return list(ACTIONS.values())
+
+
+def action_categories_for(action_id: str) -> tuple[str, ...]:
+    categories: list[str] = []
+    for category, action_ids in ACTION_CATEGORIES.items():
+        if action_id in action_ids:
+            categories.append(category)
+    return tuple(categories)
+
+
+def _action_count_at_least(state: GameState, action_id: str, minimum: int) -> bool:
+    return state.action_counts.get(action_id, 0) >= minimum
+
+
+def _category_count_at_least(state: GameState, category_id: str, minimum: int) -> bool:
+    return state.category_counts.get(category_id, 0) >= minimum
 
 
 def evaluate_events(state: GameState, action: Action) -> list[EventOutcome]:
@@ -163,7 +186,10 @@ def evaluate_ending(state: GameState) -> Ending | None:
     """多结局按「先验更窄、后验更宽」排序；不必对应原作，偏群像科幻寓言。"""
 
     # 长门疲劳崩坏优先：再高的表面分数也挡不住这条暗线。
-    if state.nagato_fatigue >= 88:
+    if (
+        state.nagato_fatigue >= NAGATO_COLLAPSE_FATIGUE_THRESHOLD
+        and _category_count_at_least(state, "investigation", 5)
+    ):
         return Ending(
             ending_id="nagato_collapse",
             title="长门有希的崩坏",
@@ -172,6 +198,9 @@ def evaluate_ending(state: GameState) -> Ending | None:
 
     # —— 理想侧 ——
     if (
+        _category_count_at_least(state, "breakthrough", 3)
+        and _category_count_at_least(state, "coordination", 2)
+        and
         state.satisfaction >= 85
         and state.clue_points >= 10
         and {"festival_plan", "homework_done", "truth_shared"}.issubset(state.flags)
@@ -184,6 +213,8 @@ def evaluate_ending(state: GameState) -> Ending | None:
         )
 
     if (
+        _category_count_at_least(state, "coordination", 3)
+        and
         state.satisfaction >= 68
         and state.stability >= 52
         and state.clue_points >= 9
@@ -196,6 +227,9 @@ def evaluate_ending(state: GameState) -> Ending | None:
         )
 
     if (
+        _category_count_at_least(state, "investigation", 3)
+        and _category_count_at_least(state, "coordination", 2)
+        and
         state.clue_points >= 12
         and {"anomaly_seen", "homework_done", "truth_shared"}.issubset(state.flags)
         and state.stability >= 45
@@ -209,6 +243,8 @@ def evaluate_ending(state: GameState) -> Ending | None:
 
     # —— 代价侧 / 灰线 ——
     if (
+        _action_count_at_least(state, "同步循环真相", 1)
+        and
         "truth_shared" in state.flags
         and state.stability <= 20
         and state.satisfaction >= 38
@@ -221,6 +257,8 @@ def evaluate_ending(state: GameState) -> Ending | None:
         )
 
     if (
+        _action_count_at_least(state, "策划惊喜活动", 2)
+        and
         "festival_plan" in state.flags
         and "truth_shared" not in state.flags
         and state.satisfaction >= 76
@@ -233,6 +271,8 @@ def evaluate_ending(state: GameState) -> Ending | None:
         )
 
     if (
+        _action_count_at_least(state, "向长门借资料", 3)
+        and
         state.clue_points >= 16
         and 0 < state.stability <= 38
         and {"anomaly_seen", "clue_chain_started", "truth_shared"}.issubset(state.flags)
@@ -244,6 +284,8 @@ def evaluate_ending(state: GameState) -> Ending | None:
         )
 
     if (
+        _category_count_at_least(state, "investigation", 2)
+        and
         state.worldline_shift >= 48
         and state.clue_points >= 9
         and state.satisfaction <= 52

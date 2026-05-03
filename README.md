@@ -77,7 +77,7 @@ Note: `观察异常` and `整合线索` remain supported as compatibility aliase
 
 ## Persistence
 
-`.haruhi_runs/<run_id>/` with `state.json` and `history.jsonl`.
+`.haruhiloop_runs/<run_id>/` with `state.json` and `history.jsonl`.
 
 ## Run tests
 

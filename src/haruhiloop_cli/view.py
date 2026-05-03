@@ -58,7 +58,7 @@ def make_metric_table(state: GameState) -> Table:
     table.add_row("线索点数", str(state.clue_points))
     table.add_row("作业进度", f"{state.homework_progress}/3")
     if state.homework_parts_done:
-        table.add_row("作业环节", ", ".join(state.homework_parts_done))
+        table.add_row("作业环节", i18n.format_homework_parts(state.homework_parts_done))
     table.add_row("团员协同", str(state.crew_sync))
     table.add_row("闭锁空间次数", str(state.closed_space_count))
     table.add_row("闭锁空间阶段", str(state.closed_space_stage))
@@ -67,14 +67,15 @@ def make_metric_table(state: GameState) -> Table:
         "记忆残留",
         f"索效+{residue.get('clue_efficiency', 0)} / 协同恢复+{residue.get('sync_recovery', 0)}",
     )
-    table.add_row("扰动模式", state.mutator_mode)
+    table.add_row("扰动模式", i18n.format_mutator_mode(state.mutator_mode))
     table.add_row("世界线偏移", str(state.worldline_shift))
     table.add_row("长门疲劳度", str(state.nagato_fatigue))
     if state.flags:
         table.add_row("叙事标记", i18n.format_flags(state.flags))
     if state.is_finished:
-        etitle = state.ending_title or ""
-        table.add_row("结局", f"{state.ending_id}（{etitle}）")
+        zh = i18n.format_ending_summary(state.ending_id)
+        etitle = (state.ending_title or "").strip()
+        table.add_row("结局", etitle or zh)
         if state.ending_epilogue:
             table.add_row("结局剧情", state.ending_epilogue)
     return table
@@ -212,25 +213,34 @@ def render_state(state: GameState, actions: list[Action]) -> None:
 def make_step_panel(record: StepRecord) -> Panel:
     lines = [
         f"动作：{record.action_id}",
+    ]
+    if record.action_flavor:
+        lines.append(record.action_flavor.strip())
+    lines.extend(
+        [
         f"变化 | 春日满意度：{record.before['satisfaction']} → {record.after['satisfaction']}",
         f"变化 | 世界稳定度：{record.before['stability']} → {record.after['stability']}",
         f"变化 | 线索点数：{record.before['clue_points']} → {record.after['clue_points']}",
         f"变化 | 长门疲劳：{record.before.get('nagato_fatigue', 0)} → {record.after.get('nagato_fatigue', 0)}",
-    ]
+        ]
+    )
     if record.mutation_profile:
         profile = record.mutation_profile
+        sat_k = i18n.MUTATION_PROFILE_KEY_LABELS.get("satisfaction_factor", "情绪系数")
+        stab_k = i18n.MUTATION_PROFILE_KEY_LABELS.get("stability_factor", "稳定系数")
+        clue_k = i18n.MUTATION_PROFILE_KEY_LABELS.get("clue_factor", "线索系数")
         lines.append(
             "扰动系数 | "
-            f"情绪x{profile.get('satisfaction_factor', 1.0):.2f} "
-            f"稳定x{profile.get('stability_factor', 1.0):.2f} "
-            f"线索x{profile.get('clue_factor', 1.0):.2f}"
+            f"{sat_k}x{profile.get('satisfaction_factor', 1.0):.2f} "
+            f"{stab_k}x{profile.get('stability_factor', 1.0):.2f} "
+            f"{clue_k}x{profile.get('clue_factor', 1.0):.2f}"
         )
     if record.events:
         lines.append("触发事件：")
         lines.extend(f"· {item}" for item in record.events)
     if record.ending_id:
         zh = i18n.format_ending_summary(record.ending_id)
-        lines.append(f"触发结局：{zh}（{record.ending_id}）")
+        lines.append(f"触发结局：{zh}")
         ep = record.after.get("ending_epilogue") if isinstance(record.after, dict) else None
         if ep:
             lines.append("")
@@ -274,7 +284,7 @@ def render_replay(run_id: str, state: GameState, records: list[StepRecord]) -> N
         reason = "循环仍在继续。"
         if latest.ending_id:
             zh = i18n.format_ending_summary(latest.ending_id)
-            reason = f"本局结束：{zh}（{latest.ending_id}）。"
+            reason = f"本局结束：{zh}。"
         elif state.stability < 25:
             reason = "走势偏负：稳定度持续下滑。"
         elif state.satisfaction < 20:

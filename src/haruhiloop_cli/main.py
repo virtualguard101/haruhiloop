@@ -200,7 +200,7 @@ def simulate(
     for ending_id, count in sorted(endings.items(), key=lambda item: item[1], reverse=True):
         ratio = count / runs * 100
         label = i18n.format_ending_summary(ending_id)
-        typer.echo(f"{label}（{ending_id}）：{count}（{ratio:.1f}%）")
+        typer.echo(f"{label}：{count}（{ratio:.1f}%）")
 
 
 if __name__ == "__main__":

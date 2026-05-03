@@ -91,7 +91,7 @@ uv run haruhi simulate --runs 100 --policy random --mutator-mode ai --seed 7
 ## 7) 存档位置
 
 ```text
-.haruhi_runs/<run_id>/
+.haruhiloop_runs/<run_id>/
   state.json
   history.jsonl
 ```

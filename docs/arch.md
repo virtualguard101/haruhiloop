@@ -91,7 +91,7 @@ Profile 字段：
 每局路径：
 
 ```text
-.haruhi_runs/<run_id>/
+.haruhiloop_runs/<run_id>/
   state.json
   history.jsonl
 ```
