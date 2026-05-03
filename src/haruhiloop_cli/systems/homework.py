@@ -11,8 +11,8 @@ _PART_LABELS = {
 }
 
 
-def apply_homework_progress(state: GameState, action_id: str) -> list[EventOutcome]:
-    if action_id != "完成暑假作业":
+def apply_homework_progress(state: GameState, choice_id: str) -> list[EventOutcome]:
+    if choice_id != "homework_focus":
         return []
 
     if state.homework_progress >= HOMEWORK_TARGET:

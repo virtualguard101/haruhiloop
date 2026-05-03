@@ -10,6 +10,7 @@ from haruhiloop_cli import i18n
 from haruhiloop_cli.engine import GameEngine
 from haruhiloop_cli.policy import create_policy
 from haruhiloop_cli import rules, storage, view
+from haruhiloop_cli.models import StepCommand
 
 app = typer.Typer(
     no_args_is_help=True,
@@ -51,37 +52,37 @@ def start(
     )
     storage.save_state(state)
     view.render_start_intro()
-    view.render_state(state, engine.available_actions(state))
+    scenes = engine.available_scenes(state)
+    selected_scene = scenes[0] if scenes else None
+    choices = engine.available_choices(state, selected_scene.scene_id) if selected_scene else []
+    view.render_state(state, scenes, choices, selected_scene.label if selected_scene else "—")
     typer.echo(f"已开始运行：{rid}")
 
 
 @app.command(
     "step",
-    help="对已有运行推进一个时段：先写运行标识，再写动作（序号 1–8 或中文动作名）。",
+    help="对已有运行推进一个时段：先指定场景，再指定该场景下的选项。",
 )
 def step(
     run_id: str = typer.Argument(..., help="运行标识。"),
-    action_ref: str = typer.Argument(
-        ...,
-        metavar="动作",
-        help="动作序号 1–8，或与面板「动作」列一致的中文名。",
-    ),
+    scene: str = typer.Option(..., "--scene", help="场景序号或场景名。"),
+    choice: str = typer.Option(..., "--choice", help="选项序号或选项名（基于所选场景）。"),
 ) -> None:
     try:
-        action_id = rules.resolve_action_ref(action_ref)
-    except ValueError as exc:
-        typer.secho(str(exc), fg=typer.colors.RED)
-        raise typer.Exit(code=1) from exc
-
-    try:
         state = storage.load_state(run_id)
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, ValueError) as exc:
         typer.secho(str(exc), fg=typer.colors.RED)
         raise typer.Exit(code=1) from exc
 
     history = storage.load_history(run_id)
     try:
-        result = engine.step(state=state, action_id=action_id, step_number=len(history) + 1)
+        scene_id = rules.resolve_scene_ref(state, scene)
+        choice_id = rules.resolve_choice_ref(state, scene_id, choice)
+        result = engine.step(
+            state=state,
+            command=StepCommand(scene_id=scene_id, choice_id=choice_id),
+            step_number=len(history) + 1,
+        )
     except ValueError as exc:
         typer.secho(str(exc), fg=typer.colors.RED)
         raise typer.Exit(code=1) from exc
@@ -89,20 +90,26 @@ def step(
     storage.append_history(run_id, result.record)
     storage.save_state(result.state)
     view.render_step(result.record)
-    view.render_state(result.state, engine.available_actions(result.state))
+    scenes = engine.available_scenes(result.state)
+    selected_scene = next((s for s in scenes if s.scene_id == result.record.scene_id), scenes[0] if scenes else None)
+    choices = engine.available_choices(result.state, selected_scene.scene_id) if selected_scene else []
+    view.render_state(result.state, scenes, choices, selected_scene.label if selected_scene else "—")
 
 
 @app.command(
     "status",
-    help="显示某一运行的最新状态快照与当前可用动作。",
+    help="显示某一运行的最新状态快照与当前可用场景/选项。",
 )
 def status(run_id: str = typer.Argument(..., help="运行标识。")) -> None:
     try:
         state = storage.load_state(run_id)
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, ValueError) as exc:
         typer.secho(str(exc), fg=typer.colors.RED)
         raise typer.Exit(code=1) from exc
-    view.render_state(state, engine.available_actions(state))
+    scenes = engine.available_scenes(state)
+    selected_scene = scenes[0] if scenes else None
+    choices = engine.available_choices(state, selected_scene.scene_id) if selected_scene else []
+    view.render_state(state, scenes, choices, selected_scene.label if selected_scene else "—")
 
 
 @app.command(
@@ -115,7 +122,7 @@ def history(
 ) -> None:
     try:
         storage.load_state(run_id)
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, ValueError) as exc:
         typer.secho(str(exc), fg=typer.colors.RED)
         raise typer.Exit(code=1) from exc
     records = storage.load_history(run_id)
@@ -129,7 +136,7 @@ def history(
 def replay(run_id: str = typer.Argument(..., help="运行标识。")) -> None:
     try:
         state = storage.load_state(run_id)
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, ValueError) as exc:
         typer.secho(str(exc), fg=typer.colors.RED)
         raise typer.Exit(code=1) from exc
     records = storage.load_history(run_id)
@@ -186,8 +193,12 @@ def simulate(
         )
         records = []
         for step_number in range(1, max_steps + 1):
-            action = policy.choose_action(state, engine.available_actions(state), records)
-            result = engine.step(state, action, step_number)
+            scenes = engine.available_scenes(state)
+            if not scenes:
+                break
+            choice_map = {scene.scene_id: engine.available_choices(state, scene.scene_id) for scene in scenes}
+            command = policy.choose_command(state, scenes, choice_map, records)
+            result = engine.step(state, command, step_number)
             records.append(result.record)
             if state.is_finished:
                 endings[state.ending_id or "unknown"] += 1

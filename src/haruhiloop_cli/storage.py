@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from haruhiloop_cli.models import GameState, StepRecord
+from haruhiloop_cli.models import CURRENT_SCHEMA_VERSION, GameState, StepRecord
 
 DATA_DIRNAME = ".haruhiloop_runs"
 
@@ -39,6 +39,11 @@ def load_state(run_id: str, base_dir: Path | None = None) -> GameState:
     if not path.exists():
         raise FileNotFoundError(f"未找到运行记录：{run_id}")
     payload = json.loads(path.read_text(encoding="utf-8"))
+    schema_version = int(payload.get("schema_version", 0))
+    if schema_version != CURRENT_SCHEMA_VERSION:
+        raise ValueError(
+            f"运行 {run_id} 的存档版本为 {schema_version}，当前只支持 {CURRENT_SCHEMA_VERSION}。"
+        )
     return GameState.from_dict(payload)
 
 

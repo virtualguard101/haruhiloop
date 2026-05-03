@@ -11,7 +11,7 @@
 - Textual TUI（`haruhi-play`）
 - 共用模拟引擎与存档层
 
-目标是保证：逻辑可回放、可测试，同时能持续扩展动作、事件、结局与叙事文本。
+目标是保证：逻辑可回放、可测试，同时能持续扩展场景、选项、路线与叙事文本。
 
 ## 2. 分层关系
 
@@ -38,7 +38,7 @@ src/haruhiloop_cli/
   main.py                  # CLI 命令
   play_app.py              # Textual 键盘界面
   engine.py                # 单步流程编排
-  rules.py                 # 动作/事件/结局规则
+  rules.py                 # 场景/选项池、事件与结局规则
   systems/
     homework.py            # 作业任务链
     crew.py                # 团员协同
@@ -52,19 +52,19 @@ src/haruhiloop_cli/
   ending_conditions_zh.py  # TUI 作弊查看文本
 ```
 
-## 4. 引擎单步流程
+## 4. 引擎单步流程（Scene + Choice）
 
 `GameEngine.step` 的顺序：
 
-1. 校验动作并生成步前快照
-2. 应用动作增量（受 mutation profile 缩放）
-3. 更新连击与世界线偏移
+1. 校验 `scene_id + choice_id` 并生成步前快照
+2. 应用选项增量（受 mutation profile 缩放）
+3. 更新选择连击、路线推进、角色好感与世界线偏移
 4. 执行子系统钩子（作业、协同、闭锁、记忆）
 5. 执行规则事件（`evaluate_events`）
 6. 应用所有事件增量
 7. 判定结局并写入结局剧情
 8. 推进时段/日期，并在跨天时刷新 profile
-9. 生成包含 `mutation_profile` 的 `StepRecord`
+9. 生成包含 `scene/choice` 字段与 `mutation_profile` 的 `StepRecord`
 
 ## 5. 时间模型
 
@@ -86,7 +86,7 @@ Profile 字段：
 - `stability_factor`
 - `clue_factor`
 
-## 7. 持久化
+## 7. 持久化（破坏式版本）
 
 每局路径：
 
@@ -96,11 +96,12 @@ Profile 字段：
   history.jsonl
 ```
 
-`history.jsonl` 中的 `StepRecord` 包含事件列表与扰动 profile，便于回放与调参。
+- `state.json` 含 `schema_version`；当前仅接受版本 `2`，旧版本会直接报错。
+- `history.jsonl` 中的 `StepRecord` 以 `scene_id/scene_label/choice_id/choice_label` 为核心字段。
 
 ## 8. 扩展建议
 
-- 动作/事件/结局继续集中在 `rules.py`
+- 场景/选项/事件/结局继续集中在 `rules.py`
 - 新机制优先放入 `systems/*`，再由 `engine.py` 编排
 - `main.py` 与 `play_app.py` 保持薄层，不承载业务规则
 
@@ -108,7 +109,7 @@ Profile 字段：
 
 当前覆盖重点：
 
-- 引擎确定性与动作解析（`tests/test_engine.py`）
+- 引擎确定性与场景/选项解析（`tests/test_engine.py`）
 - 结局可达性（`tests/test_endings.py`）
 - v0.3 子系统（`tests/test_systems_v03.py`）
 - 扰动与校验（`tests/test_mutator.py`）

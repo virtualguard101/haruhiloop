@@ -31,14 +31,13 @@ uv run haruhi start --mutator-mode ai --seed 42 --ai-temperature 0.9
 ## 3) CLI 模式：推进与查看
 
 ```bash
-uv run haruhi step RUN 3
-uv run haruhi step RUN 向长门核对异常
-uv run haruhi step RUN 观察异常
+uv run haruhi step RUN --scene 1 --choice 2
+uv run haruhi step RUN --scene 活动室 --choice 例行集合
+uv run haruhi step RUN --scene 图书馆 --choice 向长门核对异常
 ```
 
-- 支持序号 `1-8`
-- 支持中文动作名
-- 兼容别名：`观察异常` / `整合线索`
+- `--scene` 支持当前时段场景序号或场景名
+- `--choice` 支持该场景下选项序号或选项名
 
 查看状态与记录：
 
@@ -56,9 +55,11 @@ uv run haruhi-play
 
 按键：
 
-- `1-8`：预选动作
-- `Enter`：确认执行
+- `1-9`：先选场景，再选选项
+- `Enter`：确认执行当前场景+选项
+- `r`：重置预选（回到选场景）
 - `n`：新开一局
+- `v`：切换混合叙事/详细数值视图
 - `h`：帮助
 - `q`：退出
 
@@ -80,13 +81,13 @@ uv run haruhi simulate --runs 100 --policy random --mutator-mode ai --seed 7
 
 ## 6) 关注哪些指标
 
-- `satisfaction`：春日情绪
-- `stability`：世界稳定度
-- `clue_points`：线索累计
+- `route_state.route_progress`：路线推进（haruhi/nagato/mikuru/koizumi/truth）
+- `route_state.character_affinity`：角色好感
+- `route_state.route_tension`：路线张力
+- `satisfaction/stability/clue_points`：核心资源
 - `homework_progress`：作业任务链进度
 - `crew_sync`：团员协同
-- `closed_space_stage`：闭锁危机阶段
-- `nagato_fatigue`：长门疲劳暗线
+- `closed_space_stage` 与 `nagato_fatigue`：风险压力
 
 ## 7) 存档位置
 

@@ -3,45 +3,50 @@ from __future__ import annotations
 import random
 from typing import Protocol
 
-from haruhiloop_cli.models import Action, GameState, StepRecord
+from haruhiloop_cli.models import GameState, Scene, SceneChoice, StepCommand, StepRecord
 
 
 class Policy(Protocol):
-    def choose_action(
-        self, state: GameState, actions: list[Action], history: list[StepRecord]
-    ) -> str: ...
+    def choose_command(
+        self, state: GameState, scenes: list[Scene], choice_map: dict[str, list[SceneChoice]], history: list[StepRecord]
+    ) -> StepCommand: ...
 
 
 class RandomPolicy:
-    def choose_action(
-        self, state: GameState, actions: list[Action], history: list[StepRecord]
-    ) -> str:
+    def choose_command(
+        self, state: GameState, scenes: list[Scene], choice_map: dict[str, list[SceneChoice]], history: list[StepRecord]
+    ) -> StepCommand:
         _ = state, history
-        return random.choice(actions).action_id
+        scene = random.choice(scenes)
+        choice = random.choice(choice_map[scene.scene_id])
+        return StepCommand(scene_id=scene.scene_id, choice_id=choice.choice_id)
 
 
 class GreedyPolicy:
-    def choose_action(
-        self, state: GameState, actions: list[Action], history: list[StepRecord]
-    ) -> str:
+    def choose_command(
+        self, state: GameState, scenes: list[Scene], choice_map: dict[str, list[SceneChoice]], history: list[StepRecord]
+    ) -> StepCommand:
         _ = history
 
-        def score(action: Action) -> int:
+        def score(choice: SceneChoice) -> int:
             value = (
-                2 * action.delta_satisfaction
-                + 2 * action.delta_stability
-                + 3 * action.delta_clue_points
+                2 * choice.delta_satisfaction
+                + 2 * choice.delta_stability
+                + 3 * choice.delta_clue_points
             )
-            if state.stability < 40 and action.action_id in {"安抚春日", "完成暑假作业"}:
+            if state.stability < 40 and ("coordination" in choice.tags or "nagato_relief" in choice.tags):
                 value += 8
-            if state.satisfaction < 45 and action.action_id in {"策划惊喜活动", "安抚春日"}:
+            if state.satisfaction < 45 and ("festival" in choice.tags or "haruhi_route" in choice.tags):
                 value += 8
-            if state.clue_points > 8 and action.action_id == "同步循环真相":
+            if state.clue_points > 8 and "truth_sync" in choice.tags:
                 value += 6
             return value
 
-        best = max(actions, key=score)
-        return best.action_id
+        all_choices: list[SceneChoice] = []
+        for scene in scenes:
+            all_choices.extend(choice_map.get(scene.scene_id, []))
+        best = max(all_choices, key=score)
+        return StepCommand(scene_id=best.scene_id, choice_id=best.choice_id)
 
 
 def create_policy(policy_name: str) -> Policy:

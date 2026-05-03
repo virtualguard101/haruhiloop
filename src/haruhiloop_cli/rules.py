@@ -1,134 +1,305 @@
 from __future__ import annotations
 
-from haruhiloop_cli.models import Action, Ending, EventOutcome, GameState
+from haruhiloop_cli.models import Ending, EventOutcome, GameState, Scene, SceneChoice
 from haruhiloop_cli.ending_epilogues import epilogue_for
 
-# Table-driven action definitions keep content extensible.
-# 键与 action_id 均为中文标识（展示与 CLI 序号 1–N 对应）。
-ACTIONS: dict[str, Action] = {
-    "老实上课": Action(
-        action_id="老实上课",
-        label="老实上课",
-        description="按暑期日程正常到校上课。",
-        delta_stability=2,
-    ),
-    "社团活动": Action(
-        action_id="社团活动",
-        label="社团活动",
-        description="参与 SOS 团的日常事务。",
-        delta_satisfaction=3,
-        delta_stability=-2,
-    ),
-    "向长门核对异常": Action(
-        action_id="向长门核对异常",
-        label="向长门核对异常",
-        description="把违和感与循环征兆交给长门交叉验证；她话少，但每次确认都在消耗她的演算余量。",
-        delta_clue_points=3,
-        delta_stability=-3,
-        delta_nagato_fatigue=10,
-        add_flags=("anomaly_seen",),
-    ),
-    "向长门借资料": Action(
-        action_id="向长门借资料",
-        label="向长门借资料",
-        description="从她那借走大段索引与旁证；资料越厚，她背后要压制的噪声越多。",
-        delta_clue_points=4,
-        delta_satisfaction=-1,
-        delta_nagato_fatigue=16,
-        add_flags=("clue_chain_started",),
-    ),
-    "策划惊喜活动": Action(
-        action_id="策划惊喜活动",
-        label="策划惊喜活动",
-        description="筹备有趣企划，对冲春日的无聊感。",
-        delta_satisfaction=8,
-        delta_stability=-1,
-        add_flags=("festival_plan",),
-    ),
-    "完成暑假作业": Action(
-        action_id="完成暑假作业",
-        label="完成暑假作业",
-        description="写完暑期作业，消解悬而未决的遗憾。",
-        delta_satisfaction=2,
-        delta_stability=4,
-    ),
-    "同步循环真相": Action(
-        action_id="同步循环真相",
-        label="同步循环真相",
-        description="当面讨论循环，让大家行动一致。",
-        delta_clue_points=2,
-        delta_satisfaction=5,
-        add_flags=("truth_shared",),
-    ),
-    "安抚春日": Action(
-        action_id="安抚春日",
-        label="安抚春日",
-        description="在局势不稳时引导情绪，避免春日发火。",
-        delta_satisfaction=6,
-        delta_stability=3,
-        add_flags=("haruhi_calmed",),
-    ),
-}
-
-ORDERED_ACTION_IDS: tuple[str, ...] = tuple(ACTIONS.keys())
-ACTION_ALIASES: dict[str, str] = {
-    "观察异常": "向长门核对异常",
-    "整合线索": "向长门借资料",
-}
 NAGATO_COLLAPSE_FATIGUE_THRESHOLD = 96
-ACTION_CATEGORIES: dict[str, tuple[str, ...]] = {
-    "investigation": ("向长门核对异常", "向长门借资料"),
-    "coordination": ("同步循环真相", "安抚春日"),
-    "routine": ("老实上课", "社团活动"),
-    "breakthrough": ("策划惊喜活动", "完成暑假作业"),
+
+SCENES: dict[str, Scene] = {
+    "clubroom": Scene(
+        scene_id="clubroom",
+        label="活动室",
+        description="SOS 团活动室，意见与情绪最容易正面碰撞。",
+        timeslots=("morning", "afternoon"),
+        choices=(
+            SceneChoice(
+                scene_id="clubroom",
+                choice_id="group_briefing",
+                label="例行集合",
+                description="统一今天计划，保持队伍基本节奏。",
+                delta_stability=2,
+                delta_satisfaction=1,
+                route_progress={"koizumi": 1},
+                affinity_delta={"koizumi": 1, "haruhi": 1},
+                tags=("routine",),
+            ),
+            SceneChoice(
+                scene_id="clubroom",
+                choice_id="surprise_pitch",
+                label="推进惊喜企划",
+                description="继续打磨夏日企划，刺激春日的兴奋感。",
+                delta_satisfaction=7,
+                delta_stability=-1,
+                add_flags=("festival_plan",),
+                route_progress={"haruhi": 2},
+                affinity_delta={"haruhi": 2},
+                tags=("festival", "breakthrough"),
+            ),
+            SceneChoice(
+                scene_id="clubroom",
+                choice_id="haruhi_calm_talk",
+                label="私下安抚春日",
+                description="转移冲突焦点，压低闭锁空间风险。",
+                delta_satisfaction=5,
+                delta_stability=3,
+                add_flags=("haruhi_calmed",),
+                route_progress={"haruhi": 1},
+                affinity_delta={"haruhi": 2, "kyon": 1},
+                tags=("coordination",),
+            ),
+        ),
+    ),
+    "library": Scene(
+        scene_id="library",
+        label="图书馆",
+        description="静态调查场，长门路线与世界线证据主要来源。",
+        timeslots=("morning", "afternoon", "evening"),
+        choices=(
+            SceneChoice(
+                scene_id="library",
+                choice_id="nagato_crosscheck",
+                label="向长门核对异常",
+                description="校对异常样本，提升线索精度。",
+                delta_clue_points=3,
+                delta_stability=-2,
+                delta_nagato_fatigue=10,
+                add_flags=("anomaly_seen",),
+                route_progress={"nagato": 2, "truth": 1},
+                affinity_delta={"nagato": 2},
+                tags=("investigation", "nagato"),
+            ),
+            SceneChoice(
+                scene_id="library",
+                choice_id="nagato_archives",
+                label="借阅归档资料",
+                description="调取旧记录构建循环证据链。",
+                delta_clue_points=4,
+                delta_satisfaction=-1,
+                delta_nagato_fatigue=15,
+                add_flags=("clue_chain_started",),
+                route_progress={"nagato": 2, "truth": 1},
+                affinity_delta={"nagato": 1},
+                tags=("investigation", "nagato"),
+            ),
+            SceneChoice(
+                scene_id="library",
+                choice_id="solo_trace",
+                label="独自整理线索",
+                description="阿虚独立复盘，降低团队摩擦。",
+                delta_clue_points=2,
+                delta_stability=1,
+                route_progress={"truth": 1},
+                affinity_delta={"kyon": 1},
+                tags=("investigation",),
+            ),
+        ),
+    ),
+    "city": Scene(
+        scene_id="city",
+        label="商店街",
+        description="高噪声公共场景，适合社交推进与突发事件。",
+        timeslots=("afternoon", "evening"),
+        choices=(
+            SceneChoice(
+                scene_id="city",
+                choice_id="material_procurement",
+                label="采购活动物料",
+                description="补齐企划执行资源，推进现场准备。",
+                delta_satisfaction=4,
+                delta_stability=-1,
+                delta_clue_points=1,
+                route_progress={"haruhi": 1},
+                affinity_delta={"haruhi": 1, "mikuru": 1},
+                tags=("festival", "breakthrough"),
+            ),
+            SceneChoice(
+                scene_id="city",
+                choice_id="mikuru_support",
+                label="陪朝比奈踩点",
+                description="缓解朝比奈临界压力，换取情报碎片。",
+                delta_satisfaction=2,
+                delta_stability=1,
+                delta_clue_points=1,
+                route_progress={"mikuru": 2},
+                affinity_delta={"mikuru": 3},
+                tags=("mikuru", "coordination"),
+            ),
+            SceneChoice(
+                scene_id="city",
+                choice_id="koizumi_debrief",
+                label="与古泉交换情报",
+                description="拉齐组织视角，建立协同边界。",
+                delta_stability=3,
+                delta_clue_points=2,
+                route_progress={"koizumi": 2, "truth": 1},
+                affinity_delta={"koizumi": 2},
+                tags=("coordination", "truth_sync"),
+            ),
+        ),
+    ),
+    "home": Scene(
+        scene_id="home",
+        label="阿虚家",
+        description="低刺激环境，适合补作业、整顿情绪。",
+        timeslots=("evening",),
+        choices=(
+            SceneChoice(
+                scene_id="home",
+                choice_id="homework_focus",
+                label="补习/作业推进",
+                description="集中处理暑假作业，减少长期压力源。",
+                delta_satisfaction=2,
+                delta_stability=4,
+                route_progress={"haruhi": 1},
+                tags=("homework", "breakthrough"),
+            ),
+            SceneChoice(
+                scene_id="home",
+                choice_id="private_reflection",
+                label="在家消磨并复盘",
+                description="降低社交摩擦，沉淀线索结构。",
+                delta_stability=2,
+                delta_clue_points=1,
+                route_progress={"truth": 1},
+                affinity_delta={"kyon": 1},
+                tags=("routine",),
+            ),
+            SceneChoice(
+                scene_id="home",
+                choice_id="group_call_sync",
+                label="夜间群聊同步循环",
+                description="通过远程交流统一风险判断。",
+                delta_satisfaction=3,
+                delta_clue_points=2,
+                add_flags=("truth_shared",),
+                route_progress={"truth": 2, "koizumi": 1},
+                affinity_delta={"koizumi": 1, "haruhi": 1},
+                tags=("truth_sync", "coordination"),
+            ),
+        ),
+    ),
+    "riverside": Scene(
+        scene_id="riverside",
+        label="河堤公园",
+        description="夏日晚间情绪节点，容易触发关键分歧。",
+        timeslots=("evening",),
+        choices=(
+            SceneChoice(
+                scene_id="riverside",
+                choice_id="stargazing_talk",
+                label="与春日看夜空",
+                description="通过共享体验拉高情绪阈值。",
+                delta_satisfaction=6,
+                delta_stability=1,
+                route_progress={"haruhi": 2},
+                affinity_delta={"haruhi": 3},
+                tags=("haruhi_route",),
+            ),
+            SceneChoice(
+                scene_id="riverside",
+                choice_id="truth_discussion",
+                label="面对面揭示循环",
+                description="直接讨论循环真相，风险与收益都更高。",
+                delta_satisfaction=4,
+                delta_stability=-2,
+                delta_clue_points=2,
+                add_flags=("truth_shared",),
+                route_progress={"truth": 3},
+                affinity_delta={"haruhi": 1, "nagato": 1, "koizumi": 1},
+                tags=("truth_sync", "high_risk"),
+            ),
+            SceneChoice(
+                scene_id="riverside",
+                choice_id="nagato_break",
+                label="让长门休整",
+                description="强制降载，换取短期稳定。",
+                delta_stability=3,
+                delta_nagato_fatigue=-6,
+                route_progress={"nagato": 1},
+                affinity_delta={"nagato": 2},
+                tags=("nagato_relief",),
+            ),
+        ),
+    ),
 }
 
+def get_available_scenes(state: GameState) -> list[Scene]:
+    ts = state.timeslot
+    return [scene for scene in SCENES.values() if ts in scene.timeslots]
 
-def resolve_action_ref(token: str) -> str:
-    """将 CLI 输入解析为动作 ID：纯数字 1–N 表示第 N 个动作，否则须为已注册的中文动作名。"""
+
+def get_scene(scene_id: str) -> Scene | None:
+    return SCENES.get(scene_id)
+
+
+def get_available_choices(state: GameState, scene_id: str) -> list[SceneChoice]:
+    _ = state
+    scene = SCENES.get(scene_id)
+    if scene is None:
+        return []
+    return list(scene.choices)
+
+
+def resolve_scene_ref(state: GameState, token: str) -> str:
     t = token.strip()
+    scenes = get_available_scenes(state)
     if t.isdigit():
         i = int(t)
-        if 1 <= i <= len(ORDERED_ACTION_IDS):
-            return ORDERED_ACTION_IDS[i - 1]
-        raise ValueError(f"序号须在 1–{len(ORDERED_ACTION_IDS)} 之间：{t}")
-    if t in ACTION_ALIASES:
-        return ACTION_ALIASES[t]
-    if t in ACTIONS:
-        return t
-    raise ValueError(f"未知动作：{t}")
+        if 1 <= i <= len(scenes):
+            return scenes[i - 1].scene_id
+        raise ValueError(f"场景序号须在 1–{len(scenes)} 之间：{t}")
+    for scene in scenes:
+        if t in {scene.scene_id, scene.label}:
+            return scene.scene_id
+    raise ValueError(f"未知场景：{t}")
 
 
-def get_available_actions(_state: GameState) -> list[Action]:
-    return list(ACTIONS.values())
+def resolve_choice_ref(state: GameState, scene_id: str, token: str) -> str:
+    t = token.strip()
+    choices = get_available_choices(state, scene_id)
+    if t.isdigit():
+        i = int(t)
+        if 1 <= i <= len(choices):
+            return choices[i - 1].choice_id
+        raise ValueError(f"选项序号须在 1–{len(choices)} 之间：{t}")
+    for choice in choices:
+        if t in {choice.choice_id, choice.label}:
+            return choice.choice_id
+    raise ValueError(f"未知选项：{t}")
 
 
-def action_categories_for(action_id: str) -> tuple[str, ...]:
-    categories: list[str] = []
-    for category, action_ids in ACTION_CATEGORIES.items():
-        if action_id in action_ids:
-            categories.append(category)
-    return tuple(categories)
+def find_choice(scene_id: str, choice_id: str) -> SceneChoice | None:
+    scene = SCENES.get(scene_id)
+    if scene is None:
+        return None
+    for choice in scene.choices:
+        if choice.choice_id == choice_id:
+            return choice
+    return None
 
 
-def _action_count_at_least(state: GameState, action_id: str, minimum: int) -> bool:
-    return state.action_counts.get(action_id, 0) >= minimum
+def choice_has_tag(choice: SceneChoice, tag: str) -> bool:
+    return tag in choice.tags
 
 
-def _category_count_at_least(state: GameState, category_id: str, minimum: int) -> bool:
-    return state.category_counts.get(category_id, 0) >= minimum
+def _route_progress_at_least(state: GameState, route_id: str, minimum: int) -> bool:
+    return state.route_state.route_progress.get(route_id, 0) >= minimum
 
 
-def evaluate_events(state: GameState, action: Action) -> list[EventOutcome]:
+def _affinity_at_least(state: GameState, character_id: str, minimum: int) -> bool:
+    return state.route_state.character_affinity.get(character_id, 0) >= minimum
+
+
+def evaluate_events(state: GameState, choice: SceneChoice) -> list[EventOutcome]:
     outcomes: list[EventOutcome] = []
 
-    if state.current_action_streak >= 2:
+    if state.current_choice_streak >= 2:
         outcomes.append(
             EventOutcome(
                 event_id="boredom_spike",
                 description="重复同样的安排让春日更加厌倦。",
-                delta_satisfaction=-2 * state.current_action_streak,
-                delta_stability=-state.current_action_streak,
+                delta_satisfaction=-2 * state.current_choice_streak,
+                delta_stability=-state.current_choice_streak,
             )
         )
 
@@ -152,7 +323,7 @@ def evaluate_events(state: GameState, action: Action) -> list[EventOutcome]:
             )
         )
 
-    if action.action_id == "同步循环真相" and state.crew_sync < 55:
+    if choice_has_tag(choice, "truth_sync") and state.crew_sync < 55:
         outcomes.append(
             EventOutcome(
                 event_id="sync_without_alignment",
@@ -163,7 +334,7 @@ def evaluate_events(state: GameState, action: Action) -> list[EventOutcome]:
         )
 
     if (
-        action.action_id == "策划惊喜活动"
+        choice_has_tag(choice, "festival")
         and "homework_done" in state.flags
         and "truth_shared" in state.flags
         and state.crew_sync >= 60
@@ -183,12 +354,10 @@ def evaluate_events(state: GameState, action: Action) -> list[EventOutcome]:
 
 
 def evaluate_ending(state: GameState) -> Ending | None:
-    """多结局按「先验更窄、后验更宽」排序；不必对应原作，偏群像科幻寓言。"""
-
-    # 长门疲劳崩坏优先：再高的表面分数也挡不住这条暗线。
+    """多结局按优先级判定：路线进度 + 关键叙事标记 + 状态阈值。"""
     if (
         state.nagato_fatigue >= NAGATO_COLLAPSE_FATIGUE_THRESHOLD
-        and _category_count_at_least(state, "investigation", 5)
+        and _route_progress_at_least(state, "nagato", 6)
     ):
         return Ending(
             ending_id="nagato_collapse",
@@ -196,14 +365,14 @@ def evaluate_ending(state: GameState) -> Ending | None:
             description=epilogue_for("nagato_collapse"),
         )
 
-    # —— 理想侧 ——
     if (
-        _category_count_at_least(state, "breakthrough", 3)
-        and _category_count_at_least(state, "coordination", 2)
+        _route_progress_at_least(state, "haruhi", 6)
+        and _route_progress_at_least(state, "truth", 4)
+        and _affinity_at_least(state, "haruhi", 62)
         and
         state.satisfaction >= 85
         and state.clue_points >= 10
-        and {"festival_plan", "homework_done", "truth_shared"}.issubset(state.flags)
+        and {"festival_plan", "homework_done", "truth_shared", "haruhi_calmed"}.issubset(state.flags)
         and state.crew_sync >= 65
     ):
         return Ending(
@@ -213,7 +382,8 @@ def evaluate_ending(state: GameState) -> Ending | None:
         )
 
     if (
-        _category_count_at_least(state, "coordination", 3)
+        _route_progress_at_least(state, "koizumi", 4)
+        and _route_progress_at_least(state, "truth", 3)
         and
         state.satisfaction >= 68
         and state.stability >= 52
@@ -227,8 +397,8 @@ def evaluate_ending(state: GameState) -> Ending | None:
         )
 
     if (
-        _category_count_at_least(state, "investigation", 3)
-        and _category_count_at_least(state, "coordination", 2)
+        _route_progress_at_least(state, "truth", 5)
+        and _route_progress_at_least(state, "nagato", 3)
         and
         state.clue_points >= 12
         and {"anomaly_seen", "homework_done", "truth_shared"}.issubset(state.flags)
@@ -241,14 +411,14 @@ def evaluate_ending(state: GameState) -> Ending | None:
             description=epilogue_for("kyon_breaks_loop"),
         )
 
-    # —— 代价侧 / 灰线 ——
     if (
-        _action_count_at_least(state, "同步循环真相", 1)
+        _route_progress_at_least(state, "truth", 4)
         and
         "truth_shared" in state.flags
         and state.stability <= 20
         and state.satisfaction >= 38
         and state.closed_space_count >= 1
+        and state.route_state.route_tension >= 6
     ):
         return Ending(
             ending_id="meltdown_pact",
@@ -257,7 +427,7 @@ def evaluate_ending(state: GameState) -> Ending | None:
         )
 
     if (
-        _action_count_at_least(state, "策划惊喜活动", 2)
+        _route_progress_at_least(state, "haruhi", 5)
         and
         "festival_plan" in state.flags
         and "truth_shared" not in state.flags
@@ -271,7 +441,7 @@ def evaluate_ending(state: GameState) -> Ending | None:
         )
 
     if (
-        _action_count_at_least(state, "向长门借资料", 3)
+        _route_progress_at_least(state, "nagato", 5)
         and
         state.clue_points >= 16
         and 0 < state.stability <= 38
@@ -284,7 +454,7 @@ def evaluate_ending(state: GameState) -> Ending | None:
         )
 
     if (
-        _category_count_at_least(state, "investigation", 2)
+        _route_progress_at_least(state, "truth", 2)
         and
         state.worldline_shift >= 48
         and state.clue_points >= 9

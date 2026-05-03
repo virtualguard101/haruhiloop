@@ -25,8 +25,9 @@ TUI 与 CLI 共用同一引擎与存档：
 
 | 按键 | 行为 |
 |---|---|
-| `1-8` | 预选动作序号（表格高亮） |
-| `Enter` | 执行当前预选 |
+| `1-9` | 先选场景，再选该场景下选项 |
+| `Enter` | 执行当前场景+选项 |
+| `r` | 重置当前预选 |
 | `n` | 新开一局 |
 | `v` | 切换视图（混合叙事 / 详细数值） |
 | `h` | 帮助面板开关 |
@@ -72,20 +73,20 @@ TUI 与 CLI 共用同一引擎与存档：
 - `make_classic_quote_panel`
 - `make_metric_table`
 - `make_metric_table_hybrid`
-- `make_action_table`
+- `make_scene_table`
+- `make_choice_table`
 - `make_step_panel`
 
 ## 6) 注意点
 
 - 动效刷新频率保持低频，避免输入迟滞
 - 噪声化仅轻微扰动，必须保证台词可辨识
-- 别名兼容（`观察异常`）在规则层处理，不在 TUI 层处理
+- 场景/选项解析在规则层处理，不在 TUI 层处理
 
-## 7) 行动叙事文案（action flavor）
+## 7) 场景叙事文案（choice flavor）
 
-- 引擎每步可写入 `StepRecord.action_flavor`，`make_step_panel` 会插在「动作」与数值变化之间。
-- **常规**：8 动作各 10 条；**特殊**：终盘/关键节点命中 **群像碎片**（`人名｜` 短句五行，优先级最高）；其次长门疲劳 ≥80 核对/借资料 **`长门：`**；协同过低或世界线过高时社团 **`朝比奈：`**；高压时 **阿虚「」独白**（三档）。
-- 详见 **[action-flavor-memo.md](./action-flavor-memo.md)**；**文案仍可继续优化**（语气、长度、触发条件与池内容）。
+- 引擎每步可写入 `StepRecord.action_flavor`，`make_step_panel` 会插在「场景/选择」与变化描述之间。
+- 文案池以 `scene_id.choice_id` 作为键，支持可复现伪随机与防三连重复。
 
 ## 8) 混合叙事视图（hybrid）
 

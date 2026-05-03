@@ -9,7 +9,7 @@ from rich.style import Style
 from rich.table import Table
 
 from haruhiloop_cli import i18n
-from haruhiloop_cli.models import Action, GameState, StepRecord
+from haruhiloop_cli.models import GameState, Scene, SceneChoice, StepRecord
 
 console = Console()
 CLASSIC_QUOTE_JP = "過ぎ去った時間は、決して取り戻せないのよ"
@@ -146,35 +146,56 @@ def make_metric_table_hybrid(state: GameState, prev_state: GameState | None = No
 _ROW_HIGHLIGHT = Style(bold=True, reverse=True)
 
 
-def make_action_table(
-    actions: list[Action],
+def make_scene_table(
+    scenes: list[Scene],
     *,
     subtitle: str = "",
     highlight_index: int | None = None,
 ) -> Table:
-    """highlight_index: 1–len(actions)，与面板序号一致；用于 TUI 预选高亮。"""
-    title = "可用动作" + subtitle
-    action_table = Table(title=title)
-    action_table.add_column("序号", justify="right")
-    action_table.add_column("动作")
-    action_table.add_column("倾向（情/稳/索/门疲）")
-    action_table.add_column("说明")
-    for index, action in enumerate(actions, start=1):
-        impact = (
-            f"情{action.delta_satisfaction:+d} "
-            f"稳{action.delta_stability:+d} "
-            f"索{action.delta_clue_points:+d} "
-            f"门{action.delta_nagato_fatigue:+d}"
-        )
+    title = "可用场景" + subtitle
+    scene_table = Table(title=title)
+    scene_table.add_column("序号", justify="right")
+    scene_table.add_column("场景")
+    scene_table.add_column("说明")
+    for index, scene in enumerate(scenes, start=1):
         row_style = _ROW_HIGHLIGHT if highlight_index == index else None
-        action_table.add_row(
+        scene_table.add_row(
             str(index),
-            action.action_id,
-            impact,
-            action.description,
+            scene.label,
+            scene.description,
             style=row_style,
         )
-    return action_table
+    return scene_table
+
+
+def make_choice_table(
+    choices: list[SceneChoice],
+    *,
+    subtitle: str = "",
+    highlight_index: int | None = None,
+) -> Table:
+    title = "可用选项" + subtitle
+    choice_table = Table(title=title)
+    choice_table.add_column("序号", justify="right")
+    choice_table.add_column("选项")
+    choice_table.add_column("倾向（情/稳/索/门疲）")
+    choice_table.add_column("说明")
+    for index, choice in enumerate(choices, start=1):
+        impact = (
+            f"情{choice.delta_satisfaction:+d} "
+            f"稳{choice.delta_stability:+d} "
+            f"索{choice.delta_clue_points:+d} "
+            f"门{choice.delta_nagato_fatigue:+d}"
+        )
+        row_style = _ROW_HIGHLIGHT if highlight_index == index else None
+        choice_table.add_row(
+            str(index),
+            choice.label,
+            impact,
+            choice.description,
+            style=row_style,
+        )
+    return choice_table
 
 
 def render_start_intro() -> None:
@@ -188,7 +209,7 @@ def render_start_intro() -> None:
 · 通过线索、作业、真相同步与活动企划等组合，争取较好结局；放任无聊与不稳则可能迎来崩坏终局。
 
 [bold]基本操作[/bold]
-· 推进一步：[cyan]haruhi step 运行标识 动作[/cyan] —— 第二参数填动作 [cyan]序号 1–8[/cyan]（见下方表格），或与表中一致的[cyan]中文动作名[/cyan]。
+· 推进一步：[cyan]haruhi step 运行标识 --scene 场景 --choice 选项[/cyan] —— 场景/选项均可填序号或中文名。
 · 看当前状态：[cyan]haruhi status 运行标识[/cyan]
 · 看历史：[cyan]haruhi history 运行标识[/cyan]（可加 [cyan]--last N[/cyan]）
 · 回放小结：[cyan]haruhi replay 运行标识[/cyan]
@@ -257,7 +278,7 @@ def _apply_noise(text: str, *, noise_level: int, seed: int) -> str:
     return "".join(chars)
 
 
-def render_state(state: GameState, actions: list[Action]) -> None:
+def render_state(state: GameState, scenes: list[Scene], choices: list[SceneChoice], selected_scene_label: str) -> None:
     console.print(make_metric_table(state))
     if state.closed_space_stage > 0:
         console.print(
@@ -268,7 +289,13 @@ def render_state(state: GameState, actions: list[Action]) -> None:
             )
         )
     console.print(
-        make_action_table(actions, subtitle="（step 时第二参数可填序号或下列中文名）"),
+        make_scene_table(scenes, subtitle="（step 时 --scene 可填序号或中文名）"),
+    )
+    console.print(
+        make_choice_table(
+            choices,
+            subtitle=f"（当前场景：{selected_scene_label}；--choice 可填序号或中文名）",
+        )
     )
 
 
@@ -282,7 +309,8 @@ def _narrative_change(previous: int, current: int, *, up: str, down: str, flat: 
 
 def make_step_panel(record: StepRecord, *, narrative_mode: bool = False) -> Panel:
     lines = [
-        f"动作：{record.action_id}",
+        f"场景：{record.scene_label}",
+        f"选择：{record.choice_label}",
     ]
     if record.action_flavor:
         lines.append(record.action_flavor.strip())
@@ -350,7 +378,7 @@ def render_history(records: list[StepRecord], last: int | None = None) -> None:
     table = Table(title=f"历史（共 {len(selected)} 条）")
     table.add_column("步数", justify="right")
     table.add_column("日 / 时段")
-    table.add_column("动作")
+    table.add_column("场景/选择")
     table.add_column("事件数")
     table.add_column("结局")
     for item in selected:
@@ -358,7 +386,7 @@ def render_history(records: list[StepRecord], last: int | None = None) -> None:
         table.add_row(
             str(item.step_number),
             f"第{item.day}天·{slot}",
-            item.action_label,
+            f"{item.scene_label} / {item.choice_label}",
             str(len(item.events)),
             i18n.format_ending_summary(item.ending_id) if item.ending_id else "—",
         )
