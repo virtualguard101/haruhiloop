@@ -18,6 +18,18 @@
 
 模拟核心保持状态机可回放。确定性模式下，相同初始状态与动作序列会得到相同结果。
 
+## 工程架构
+
+项目已完成第一阶段工程化分层重构，采用以下层次：
+
+- `interfaces`：CLI/TUI 入口与渲染适配
+- `application`：用例编排服务（`start/step/status/replay/simulate`）
+- `domain`：引擎、规则、系统机制、模型
+- `infrastructure`：存档持久化
+- `narrative`：i18n 与叙事文案资源
+
+详细说明见 `docs/arch.md`。
+
 ## 玩法机制
 
 - 时间按 `morning -> afternoon -> evening` 推进，傍晚后进入下一天
