@@ -76,6 +76,9 @@ class GameState:
         }
     )
     nagato_fatigue: int = 0
+    action_counts: dict[str, int] = field(default_factory=dict)
+    category_counts: dict[str, int] = field(default_factory=dict)
+    action_flavor_recent: dict[str, tuple[int, ...]] = field(default_factory=dict)
     ending_id: str | None = None
     ending_title: str | None = None
     ending_epilogue: str | None = None
@@ -129,6 +132,28 @@ class GameState:
         parsed.pop("timeslot", None)
         parsed.setdefault("ending_epilogue", None)
         parsed.setdefault("nagato_fatigue", 0)
+        parsed["action_counts"] = dict(parsed.get("action_counts", {}))
+        parsed["category_counts"] = dict(parsed.get("category_counts", {}))
+        _af = parsed.get("action_flavor_recent")
+        if isinstance(_af, dict):
+            parsed["action_flavor_recent"] = {
+                str(k): tuple(int(x) for x in (v if isinstance(v, (list, tuple)) else ()))
+                for k, v in _af.items()
+            }
+        else:
+            parsed["action_flavor_recent"] = {}
+        _legacy = parsed.pop("club_activity_flavor_recent", None)
+        if _legacy not in (None, (), []):
+            if isinstance(_legacy, list):
+                tup = tuple(int(x) for x in _legacy)
+            elif isinstance(_legacy, tuple):
+                tup = tuple(int(x) for x in _legacy)
+            else:
+                tup = ()
+            if tup:
+                d = dict(parsed["action_flavor_recent"])
+                d.setdefault("社团活动", tup)
+                parsed["action_flavor_recent"] = d
         return cls(**parsed)
 
 
@@ -144,11 +169,14 @@ class StepRecord:
     events: list[str]
     mutation_profile: dict[str, float] | None = None
     ending_id: str | None = None
+    action_flavor: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "StepRecord":
-        return cls(**data)
+        payload = dict(data)
+        payload.setdefault("action_flavor", None)
+        return cls(**payload)
 

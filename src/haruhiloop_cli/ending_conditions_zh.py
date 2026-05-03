@@ -7,35 +7,51 @@ from __future__ import annotations
 DISPLAY_FOR_CHEAT = """\
 [bold]当前版本结局条件[/bold]（一步 = 一整天；判定自上而下，先命中先结算）
 
-[bold cyan]0. nagato_collapse[/bold cyan] — 长门有希的崩坏（暗线优先）
-  · 长门疲劳度 ≥ 88（「向长门核对异常」「向长门借资料」会积累不同疲劳）
+[bold cyan]0.[/bold cyan] [bold]长门有希的崩坏[/bold]（暗线优先）
+  · 你们把问题不断压给长门，最终她先于世界线崩裂。
+  · 硬门槛：调查类累计 ≥ 5；长门疲劳度 ≥ 96
 
-[bold cyan]1. haruhi_happy_new_world[/bold cyan] — 晴空下的新周目
-  · 满意度 ≥ 85、线索 ≥ 10
-  · flags：festival_plan, homework_done, truth_shared
+[bold cyan]1.[/bold cyan] [bold]晴空下的新周目[/bold]
+  · 团队完成关键课题并形成协同，循环以相对温和的方式松动。
+  · 硬门槛：突破类累计 ≥ 3，协同类累计 ≥ 2
+  · 满意度 ≥ 85、线索 ≥ 10、团员协同 ≥ 65
+  · 需同时具备叙事标记：惊喜活动计划、暑假作业已完成、已向众人揭示循环
 
-[bold cyan]2. consensus_paradise[/bold cyan] — 共识温室
+[bold cyan]2.[/bold cyan] [bold]共识温室[/bold]
+  · 大家达成稳定共识，世界被维持在“看似理想”的封闭平衡中。
+  · 硬门槛：协同类累计 ≥ 3
   · 满意度 ≥ 68、稳定度 ≥ 52、线索 ≥ 9
-  · flags：hope_signal, truth_shared, homework_done
+  · 需同时具备叙事标记：希望信号、已向众人揭示循环、暑假作业已完成
 
-[bold cyan]3. kyon_breaks_loop[/bold cyan] — 切口与回声
-  · 线索 ≥ 12、稳定度 ≥ 45
-  · flags：anomaly_seen, homework_done, truth_shared
+[bold cyan]3.[/bold cyan] [bold]切口与回声[/bold]
+  · 靠持续调查与协作撕开细小切口，一点点走出重复。
+  · 硬门槛：调查类累计 ≥ 3，协同类累计 ≥ 2
+  · 线索 ≥ 12、稳定度 ≥ 45、团员协同 ≥ 55
+  · 需同时具备叙事标记：已察觉异常、暑假作业已完成、已向众人揭示循环
 
-[bold cyan]4. meltdown_pact[/bold cyan] — 真相暴晒协议
-  · 已 truth_shared；稳定度 ≤ 20；满意度 ≥ 38；闭锁空间次数 ≥ 1
+[bold cyan]4.[/bold cyan] [bold]真相暴晒协议[/bold]
+  · 真相被强行公开，短期止痛但系统承压，代价明显。
+  · 硬门槛：「同步循环真相」至少执行 1 次
+  · 需已向众人揭示循环；稳定度 ≤ 20；满意度 ≥ 38；闭锁空间次数 ≥ 1
 
-[bold cyan]5. hollow_celebration[/bold cyan] — 空洞庆典
-  · 有 festival_plan；[bold]无[/bold] truth_shared；满意度 ≥ 76；线索 ≤ 7
+[bold cyan]5.[/bold cyan] [bold]空洞庆典[/bold]
+  · 表面热闹成功，核心问题被回避，庆典后只剩空转。
+  · 硬门槛：「策划惊喜活动」至少执行 2 次
+  · 需有叙事标记「惊喜活动计划」，且未「已向众人揭示循环」；满意度 ≥ 76；线索 ≤ 7
 
-[bold cyan]6. archive_bound[/bold cyan] — 归档囚徒
+[bold cyan]6.[/bold cyan] [bold]归档囚徒[/bold]
+  · 线索极多却无法真正离开，你们成了循环档案的看守者。
+  · 硬门槛：「向长门借资料」至少执行 3 次
   · 线索 ≥ 16；稳定度在 (0, 38] 区间
-  · flags：anomaly_seen, clue_chain_started, truth_shared
+  · 需同时具备叙事标记：已察觉异常、线索链已展开、已向众人揭示循环
 
-[bold cyan]7. observer_bailout[/bold cyan] — 观测者脱钩
-  · worldline_shift ≥ 48；线索 ≥ 9；满意度 ≤ 52；有 anomaly_seen
+[bold cyan]7.[/bold cyan] [bold]观测者脱钩[/bold]
+  · 你看清了异常却与主线人群脱节，只能以旁观者姿态抽离。
+  · 硬门槛：调查类累计 ≥ 2
+  · 世界线偏移 ≥ 48；线索 ≥ 9；满意度 ≤ 52；需已「已察觉异常」
 
-[bold cyan]8. shinirappears_unstable_world[/bold cyan] — 结构体崩解
-  · 稳定度 ≤ 0；或（满意度 ≤ 5 且 闭锁空间次数 ≥ 2）
+[bold cyan]8.[/bold cyan] [bold]结构体崩解[/bold]
+  · 情绪与稳定度双重失控，闭锁空间扩张到不可收拾。
+  · 稳定度 ≤ 0；或 闭锁空间阶段 ≥ 3；或（满意度 ≤ 5 且 闭锁空间次数 ≥ 2）
 
 [dim]叙事为原创向群像寓言，不必对应单一原作剧情。[/dim]"""
