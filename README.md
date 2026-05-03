@@ -16,6 +16,18 @@ This project currently provides both:
 
 The loop is state-driven and replayable. In deterministic mode, the same initial state plus the same action sequence yields the same result.
 
+## Architecture
+
+The project now uses a staged layered architecture:
+
+- `interfaces`: CLI/TUI entrypoints and rendering adapters
+- `application`: use-case orchestration (`start/step/status/replay/simulate`)
+- `domain`: engine, rules, systems, and core models
+- `infrastructure`: persistence adapters
+- `narrative`: i18n and narrative text resources
+
+See `docs/arch.md` for the full architecture reference.
+
 ## Gameplay model
 
 Each run tracks:

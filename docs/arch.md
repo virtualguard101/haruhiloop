@@ -1,121 +1,108 @@
-# Haruhi Loop 架构说明
+# HaruhiLoop Architecture
 
-[English](arch.md)
-[简体中文](arch_zh-CN.md)
+本文描述当前代码在“工程化分层重构第一阶段”后的结构：新增分层包，同时保留旧模块路径作为兼容门面。
 
-## 1. 当前范围
+## 1. 目标与边界
 
-当前运行面包含：
+- 保持入口兼容：`haruhi` -> `haruhiloop_cli.main:app`，`haruhi-play` -> `haruhiloop_cli.play_app:run_play`
+- 将业务编排从 CLI/TUI 入口下沉到应用层服务，降低 UI 层耦合
+- 保持旧导入路径可用（测试与外部脚本不破坏）
 
-- Typer CLI（`haruhi`）
-- Textual TUI（`haruhi-play`）
-- 共用模拟引擎与存档层
-
-目标是保证：逻辑可回放、可测试，同时能持续扩展场景、选项、路线与叙事文本。
-
-## 2. 分层关系
+## 2. 分层结构
 
 ```mermaid
-flowchart TD
-  cliLayer[CLI haruhiloop_cli::main.py] --> engineLayer[引擎 haruhiloop_cli::engine.py]
-  runnerLayer[main.py] --> tuiLayer[haruhiloop_cli::play_app.py]
-  tuiLayer[TUI haruhiloop_cli::play_app.py] --> engineLayer
-  cliLayer --> storageLayer[存档 haruhiloop_cli::storage.py]
-  tuiLayer --> storageLayer
-  cliLayer --> viewLayer[渲染 haruhiloop_cli::view.py]
-  tuiLayer --> viewLayer
-  engineLayer --> rulesLayer[规则 haruhiloop_cli::rules.py]
-  engineLayer --> systemsLayer[子系统 haruhiloop_cli::systems/*]
-  engineLayer --> mutatorLayer[扰动 haruhiloop_cli::mutator.py]
-  engineLayer --> modelLayer[模型 haruhiloop_cli::models.py]
-  rulesLayer --> endingTextLayer[结局文本 haruhiloop_cli::ending_epilogues.py]
+flowchart LR
+  subgraph interfaces [Interfaces]
+    cliCmds[interfaces.cli.commands]
+    tuiApp[interfaces.tui.app]
+    tuiView[interfaces.tui.view_renderers]
+  end
+
+  subgraph application [Application]
+    gameService[application.services.game_service]
+  end
+
+  subgraph domain [Domain]
+    gameEngine[domain.engine.game_engine]
+    domainRules[domain.rules]
+    domainSystems[domain.systems]
+    domainModels[domain.model.models]
+  end
+
+  subgraph infra [Infrastructure]
+    fileStorage[infrastructure.persistence.storage]
+  end
+
+  subgraph narrative [Narrative]
+    i18nLayer[narrative.i18n]
+    flavorLayer[narrative.action_flavor]
+    epilogueLayer[narrative.ending_epilogues]
+  end
+
+  cliCmds --> gameService
+  tuiApp --> gameService
+  tuiView --> gameService
+  gameService --> gameEngine
+  gameService --> fileStorage
+  gameService --> i18nLayer
+  gameEngine --> domainRules
+  gameEngine --> domainSystems
+  gameEngine --> domainModels
+  domainRules --> flavorLayer
+  domainRules --> epilogueLayer
 ```
 
-## 3. 关键文件
+## 3. 目录（当前实现）
 
 ```text
 src/haruhiloop_cli/
-  main.py                  # CLI 命令
-  play_app.py              # Textual 键盘界面
-  engine.py                # 单步流程编排
-  rules.py                 # 场景/选项池、事件与结局规则
-  systems/
-    homework.py            # 作业任务链
-    crew.py                # 团员协同
-    closed_space.py        # 闭锁阶段危机流
-    memory.py              # 循环记忆残留
-  mutator.py               # deterministic / ai 扰动 profile
-  models.py                # 状态与记录模型
-  storage.py               # state.json + history.jsonl
-  view.py                  # Rich 展示（CLI/TUI 共用）
-  ending_epilogues.py      # 结局长剧情
-  ending_conditions_zh.py  # TUI 作弊查看文本
+  interfaces/
+    cli/commands.py                  # CLI 命令实现（新入口实现）
+    tui/app.py                       # TUI 兼容导出（第一阶段）
+    tui/view_renderers.py            # Rich 渲染兼容导出（第一阶段）
+  application/
+    services/game_service.py         # start/step/status/replay/simulate 用例编排
+  domain/
+    engine/game_engine.py            # 引擎兼容导出（第一阶段）
+    model/models.py                  # 模型兼容导出（第一阶段）
+    rules/*.py                       # rules/policy/mutator/ending 条件兼容导出
+    systems/*.py                     # v0.3 子系统兼容导出
+  infrastructure/
+    persistence/storage.py           # 持久化兼容导出
+  narrative/
+    i18n.py                          # 本地化兼容导出
+    action_flavor.py                 # 动作文案兼容导出
+    ending_epilogues.py              # 结局长剧情兼容导出
+
+  main.py                            # 薄门面：转发到 interfaces.cli.commands.app
+  play_app.py                        # 旧路径保留（当前仍含主要实现）
+  view.py                            # 旧路径保留（当前仍含主要实现）
+  engine.py/rules.py/models.py/...   # 旧路径保留（兼容）
 ```
 
-## 4. 引擎单步流程（Scene + Choice）
+## 4. 运行流（CLI）
 
-`GameEngine.step` 的顺序：
+1. `main.py` 仅暴露 `app`，实际命令在 `interfaces.cli.commands`
+2. `commands.py` 负责参数校验、错误输出、渲染调用
+3. 业务流程由 `GameService` 编排
+4. `GameService` 调用 `GameEngine` 推进状态，并调用 `storage` 读写
+5. `view_renderers` 输出 Rich 面板；`narrative.i18n` 负责文案格式化
 
-1. 校验 `scene_id + choice_id` 并生成步前快照
-2. 应用选项增量（受 mutation profile 缩放）
-3. 更新选择连击、路线推进、角色好感与世界线偏移
-4. 执行子系统钩子（作业、协同、闭锁、记忆）
-5. 执行规则事件（`evaluate_events`）
-6. 应用所有事件增量
-7. 判定结局并写入结局剧情
-8. 推进时段/日期，并在跨天时刷新 profile
-9. 生成包含 `scene/choice` 字段与 `mutation_profile` 的 `StepRecord`
+## 5. 兼容策略
 
-## 5. 时间模型
+- 第一阶段不删除 `haruhiloop_cli.*` 旧模块路径
+- 新分层模块主要以 re-export 方式建立稳定入口
+- 现有测试可以继续从旧路径导入（包含 `_toggle_view_mode`、`_apply_noise`）
 
-- `TIMESLOTS = ("morning", "afternoon", "evening")`
-- 每次 `step` 推进一个时段
-- 傍晚步会触发日终漂移，随后进入下一天并增加 `loop_count`
+## 6. 演进建议（第二阶段）
 
-## 6. 扰动模型
+- 将 `play_app.py` 与 `view.py` 的主体实现迁移到 `interfaces/tui/*`
+- 将 `engine.py`、`rules.py`、`models.py` 主体实现迁移到 `domain/*` 并把旧文件收敛为纯门面
+- 在一到两个 minor 版本后，再考虑为旧路径添加 `DeprecationWarning`
 
-`mutator.py` 提供：
+## 7. 验证与回归
 
-- `DeterministicMutator`
-- `AIMutator`（本地伪 AI 扰动，不调用外部 API）
-- `validate_profile`（对系数做安全钳制）
-
-Profile 字段：
-
-- `satisfaction_factor`
-- `stability_factor`
-- `clue_factor`
-
-## 7. 持久化（破坏式版本）
-
-每局路径：
-
-```text
-.haruhiloop_runs/<run_id>/
-  state.json
-  history.jsonl
-```
-
-- `state.json` 含 `schema_version`；当前仅接受版本 `2`，旧版本会直接报错。
-- `history.jsonl` 中的 `StepRecord` 以 `scene_id/scene_label/choice_id/choice_label` 为核心字段。
-
-## 8. 扩展建议
-
-- 场景/选项/事件/结局继续集中在 `rules.py`
-- 新机制优先放入 `systems/*`，再由 `engine.py` 编排
-- `main.py` 与 `play_app.py` 保持薄层，不承载业务规则
-
-## 9. 测试
-
-当前覆盖重点：
-
-- 引擎确定性与场景/选项解析（`tests/test_engine.py`）
-- 结局可达性（`tests/test_endings.py`）
-- v0.3 子系统（`tests/test_systems_v03.py`）
-- 扰动与校验（`tests/test_mutator.py`）
-
-运行：
-
-```bash
-uv run pytest -q
-```
+- 单元测试：`uv run pytest -q`
+- CLI 入口：`uv run haruhi --help`
+- TUI 入口：`uv run haruhi-play`
+- 兼容导入：`from haruhiloop_cli.play_app import run_play` 仍可用

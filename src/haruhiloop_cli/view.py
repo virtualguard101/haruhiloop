@@ -178,24 +178,60 @@ def make_choice_table(
     choice_table = Table(title=title)
     choice_table.add_column("序号", justify="right")
     choice_table.add_column("选项")
-    choice_table.add_column("倾向（情/稳/索/门疲）")
     choice_table.add_column("说明")
     for index, choice in enumerate(choices, start=1):
-        impact = (
-            f"情{choice.delta_satisfaction:+d} "
-            f"稳{choice.delta_stability:+d} "
-            f"索{choice.delta_clue_points:+d} "
-            f"门{choice.delta_nagato_fatigue:+d}"
-        )
         row_style = _ROW_HIGHLIGHT if highlight_index == index else None
         choice_table.add_row(
             str(index),
             choice.label,
-            impact,
             choice.description,
             style=row_style,
         )
     return choice_table
+
+
+def make_scene_selector_panel(
+    scenes: list[Scene],
+    *,
+    highlight_index: int | None = None,
+) -> Panel:
+    lines: list[str] = []
+    if not scenes:
+        lines.append("[dim]当前时段暂无可用场景。[/dim]")
+    for index, scene in enumerate(scenes, start=1):
+        selected = highlight_index == index
+        if selected:
+            lines.append(f"[bold reverse]▶ [{index}] {scene.label}[/bold reverse]")
+            lines.append(f"[bold reverse]   {scene.description}[/bold reverse]")
+        else:
+            lines.append(f"  [{index}] {scene.label}")
+            lines.append(f"     {scene.description}")
+        lines.append("")
+    body = "\n".join(lines).rstrip()
+    return Panel(body or " ", title="场景选择（按数字键）", border_style="cyan")
+
+
+def make_choice_selector_panel(
+    choices: list[SceneChoice],
+    *,
+    scene_label: str,
+    highlight_index: int | None = None,
+) -> Panel:
+    lines: list[str] = [f"[dim]当前场景：{scene_label}[/dim]", ""]
+    if not choices:
+        lines.append("[dim]请先选择场景。[/dim]")
+    for index, choice in enumerate(choices, start=1):
+        selected = highlight_index == index
+        if selected:
+            lines.append(f"[bold reverse]▶ [{index}] {choice.label}[/bold reverse]")
+            lines.append(f"[bold reverse]   {choice.description}[/bold reverse]")
+        else:
+            lines.append(f"  [{index}] {choice.label}")
+            lines.append(f"     {choice.description}")
+        lines.append("")
+    lines.append("[dim]数字键选中，Enter 确认，r 重置。[/dim]")
+    body = "\n".join(lines).rstrip()
+    return Panel(body or " ", title="行动选项", border_style="magenta")
 
 
 def render_start_intro() -> None:
