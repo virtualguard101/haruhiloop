@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Haruhi Loop · 无尽八月循环模拟器</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231e1e2e'/%3E%3Ctext x='16' y='22' font-size='20' text-anchor='middle' fill='%23bd93f9' font-family='monospace'%3E∞%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css" />
+    <link rel="stylesheet" href="/src/styles/terminal.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="terminal"></div>
+      <div id="hud">
+        <span id="hud-title">HARUHI LOOP</span>
+        <span id="hud-clock">--:--:--</span>
+        <span id="hud-mode">PLAY</span>
+        <span id="hud-keys">数字/Enter/r/n/v/h/q</span>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

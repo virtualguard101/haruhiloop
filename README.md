@@ -9,10 +9,11 @@ A time-loop command-line simulator inspired by "The Endless August" from The Mel
 
 </div>
 
-This project currently provides both:
+This project currently provides:
 
 - a Typer-based CLI (`haruhi`)
 - a Textual keyboard UI (`haruhi-play`)
+- a TypeScript Web port at `web/` (xterm.js terminal UI, IndexedDB storage, no backend) — see [`web/README.md`](web/README.md)
 
 The loop is state-driven and replayable. In deterministic mode, the same initial state plus the same action sequence yields the same result.
 

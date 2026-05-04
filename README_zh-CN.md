@@ -11,10 +11,11 @@
 
 ## 项目概览
 
-当前项目同时提供两种入口：
+当前项目提供：
 
 - `haruhi`：Typer 命令行接口
 - `haruhi-play`：Textual 键盘交互界面
+- `web/`：TypeScript Web 终端版（xterm.js + IndexedDB，纯静态部署，详见 [`web/README.md`](web/README.md)）
 
 模拟核心保持状态机可回放。确定性模式下，相同初始状态与动作序列会得到相同结果。
 
