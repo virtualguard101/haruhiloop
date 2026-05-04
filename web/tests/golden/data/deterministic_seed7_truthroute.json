@@ -1,0 +1,1884 @@
+{
+  "config": {
+    "name": "deterministic_seed7_truthroute",
+    "run_id": "G007",
+    "seed": 7,
+    "mutator_mode": "deterministic",
+    "ai_temperature": 0.0
+  },
+  "actions": [
+    [
+      "clubroom",
+      "haruhi_calm_talk"
+    ],
+    [
+      "library",
+      "nagato_archives"
+    ],
+    [
+      "home",
+      "group_call_sync"
+    ],
+    [
+      "clubroom",
+      "surprise_pitch"
+    ],
+    [
+      "city",
+      "koizumi_debrief"
+    ],
+    [
+      "riverside",
+      "truth_discussion"
+    ],
+    [
+      "library",
+      "solo_trace"
+    ],
+    [
+      "city",
+      "koizumi_debrief"
+    ],
+    [
+      "home",
+      "homework_focus"
+    ]
+  ],
+  "steps": [
+    {
+      "before": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 1,
+        "timeslot_index": 0,
+        "loop_count": 1,
+        "satisfaction": 60,
+        "stability": 70,
+        "clue_points": 0,
+        "closed_space_count": 0,
+        "worldline_shift": 0,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 45,
+        "member_trust": {
+          "kyon": 55,
+          "yuki": 50,
+          "mikuru": 45,
+          "koizumi": 48
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.995,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 0,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {},
+          "character_affinity": {
+            "haruhi": 50,
+            "nagato": 50,
+            "mikuru": 50,
+            "koizumi": 50,
+            "kyon": 50
+          },
+          "route_tension": 0
+        },
+        "scene_choice_counts": {},
+        "scene_flavor_recent": {},
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [],
+        "recent_choices": [],
+        "current_choice_streak": 0,
+        "previous_choice": null,
+        "timeslot": "morning"
+      },
+      "after": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 1,
+        "timeslot_index": 1,
+        "loop_count": 1,
+        "satisfaction": 65,
+        "stability": 73,
+        "clue_points": 0,
+        "closed_space_count": 0,
+        "worldline_shift": 5,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 45,
+        "member_trust": {
+          "kyon": 55,
+          "yuki": 50,
+          "mikuru": 45,
+          "koizumi": 48
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.995,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 0,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 1
+          },
+          "character_affinity": {
+            "haruhi": 52,
+            "nagato": 50,
+            "mikuru": 50,
+            "koizumi": 50,
+            "kyon": 51
+          },
+          "route_tension": 0
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "haruhi_calmed"
+        ],
+        "recent_choices": [
+          "haruhi_calm_talk"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "haruhi_calm_talk",
+        "timeslot": "afternoon"
+      },
+      "events": [],
+      "mutation_profile": {
+        "satisfaction_factor": 0.995,
+        "stability_factor": 1.0,
+        "clue_factor": 1.0
+      },
+      "ending_id": null
+    },
+    {
+      "before": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 1,
+        "timeslot_index": 1,
+        "loop_count": 1,
+        "satisfaction": 65,
+        "stability": 73,
+        "clue_points": 0,
+        "closed_space_count": 0,
+        "worldline_shift": 5,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 45,
+        "member_trust": {
+          "kyon": 55,
+          "yuki": 50,
+          "mikuru": 45,
+          "koizumi": 48
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.995,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 0,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 1
+          },
+          "character_affinity": {
+            "haruhi": 52,
+            "nagato": 50,
+            "mikuru": 50,
+            "koizumi": 50,
+            "kyon": 51
+          },
+          "route_tension": 0
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "haruhi_calmed"
+        ],
+        "recent_choices": [
+          "haruhi_calm_talk"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "haruhi_calm_talk",
+        "timeslot": "afternoon"
+      },
+      "after": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 1,
+        "timeslot_index": 2,
+        "loop_count": 1,
+        "satisfaction": 64,
+        "stability": 73,
+        "clue_points": 4,
+        "closed_space_count": 0,
+        "worldline_shift": 10,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 47,
+        "member_trust": {
+          "kyon": 56,
+          "yuki": 51,
+          "mikuru": 46,
+          "koizumi": 49
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.995,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 15,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 1,
+            "nagato": 2,
+            "truth": 1
+          },
+          "character_affinity": {
+            "haruhi": 52,
+            "nagato": 51,
+            "mikuru": 50,
+            "koizumi": 50,
+            "kyon": 51
+          },
+          "route_tension": 0
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1,
+          "nagato_archives": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ],
+          "library.nagato_archives": [
+            0
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "clue_chain_started",
+          "haruhi_calmed"
+        ],
+        "recent_choices": [
+          "haruhi_calm_talk",
+          "nagato_archives"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "nagato_archives",
+        "timeslot": "evening"
+      },
+      "events": [],
+      "mutation_profile": {
+        "satisfaction_factor": 0.995,
+        "stability_factor": 1.0,
+        "clue_factor": 1.0
+      },
+      "ending_id": null
+    },
+    {
+      "before": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 1,
+        "timeslot_index": 2,
+        "loop_count": 1,
+        "satisfaction": 64,
+        "stability": 73,
+        "clue_points": 4,
+        "closed_space_count": 0,
+        "worldline_shift": 10,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 47,
+        "member_trust": {
+          "kyon": 56,
+          "yuki": 51,
+          "mikuru": 46,
+          "koizumi": 49
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.995,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 15,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 1,
+            "nagato": 2,
+            "truth": 1
+          },
+          "character_affinity": {
+            "haruhi": 52,
+            "nagato": 51,
+            "mikuru": 50,
+            "koizumi": 50,
+            "kyon": 51
+          },
+          "route_tension": 0
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1,
+          "nagato_archives": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ],
+          "library.nagato_archives": [
+            0
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "clue_chain_started",
+          "haruhi_calmed"
+        ],
+        "recent_choices": [
+          "haruhi_calm_talk",
+          "nagato_archives"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "nagato_archives",
+        "timeslot": "evening"
+      },
+      "after": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 2,
+        "timeslot_index": 0,
+        "loop_count": 2,
+        "satisfaction": 60,
+        "stability": 66,
+        "clue_points": 6,
+        "closed_space_count": 0,
+        "worldline_shift": 15,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 48,
+        "member_trust": {
+          "kyon": 57,
+          "yuki": 52,
+          "mikuru": 47,
+          "koizumi": 50
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.99,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 15,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 1,
+            "nagato": 2,
+            "truth": 3,
+            "koizumi": 1
+          },
+          "character_affinity": {
+            "haruhi": 53,
+            "nagato": 51,
+            "mikuru": 50,
+            "koizumi": 51,
+            "kyon": 51
+          },
+          "route_tension": 0
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1,
+          "nagato_archives": 1,
+          "group_call_sync": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ],
+          "library.nagato_archives": [
+            0
+          ],
+          "home.group_call_sync": [
+            2
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "clue_chain_started",
+          "haruhi_calmed",
+          "truth_shared"
+        ],
+        "recent_choices": [
+          "haruhi_calm_talk",
+          "nagato_archives",
+          "group_call_sync"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "group_call_sync",
+        "timeslot": "morning"
+      },
+      "events": [
+        "团员协同摩擦：信息同步受阻，部分成员仍对循环半信半疑。",
+        "一日将尽的摩擦余波：这一天又在未解的心结里结束。",
+        "协同不足导致同步失效：团员协同不足，同步真相并未形成稳定合力。",
+        "作业压力累积：夜色临近却仍未动笔，作业压力在团内蔓延。"
+      ],
+      "mutation_profile": {
+        "satisfaction_factor": 0.995,
+        "stability_factor": 1.0,
+        "clue_factor": 1.0
+      },
+      "ending_id": null
+    },
+    {
+      "before": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 2,
+        "timeslot_index": 0,
+        "loop_count": 2,
+        "satisfaction": 60,
+        "stability": 66,
+        "clue_points": 6,
+        "closed_space_count": 0,
+        "worldline_shift": 15,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 48,
+        "member_trust": {
+          "kyon": 57,
+          "yuki": 52,
+          "mikuru": 47,
+          "koizumi": 50
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.99,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 15,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 1,
+            "nagato": 2,
+            "truth": 3,
+            "koizumi": 1
+          },
+          "character_affinity": {
+            "haruhi": 53,
+            "nagato": 51,
+            "mikuru": 50,
+            "koizumi": 51,
+            "kyon": 51
+          },
+          "route_tension": 0
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1,
+          "nagato_archives": 1,
+          "group_call_sync": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ],
+          "library.nagato_archives": [
+            0
+          ],
+          "home.group_call_sync": [
+            2
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "clue_chain_started",
+          "haruhi_calmed",
+          "truth_shared"
+        ],
+        "recent_choices": [
+          "haruhi_calm_talk",
+          "nagato_archives",
+          "group_call_sync"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "group_call_sync",
+        "timeslot": "morning"
+      },
+      "after": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 2,
+        "timeslot_index": 1,
+        "loop_count": 2,
+        "satisfaction": 67,
+        "stability": 65,
+        "clue_points": 6,
+        "closed_space_count": 0,
+        "worldline_shift": 22,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 51,
+        "member_trust": {
+          "kyon": 59,
+          "yuki": 54,
+          "mikuru": 49,
+          "koizumi": 52
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.99,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 15,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 3,
+            "nagato": 2,
+            "truth": 3,
+            "koizumi": 1
+          },
+          "character_affinity": {
+            "haruhi": 55,
+            "nagato": 51,
+            "mikuru": 50,
+            "koizumi": 51,
+            "kyon": 51
+          },
+          "route_tension": 0
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1,
+          "nagato_archives": 1,
+          "group_call_sync": 1,
+          "surprise_pitch": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ],
+          "library.nagato_archives": [
+            0
+          ],
+          "home.group_call_sync": [
+            2
+          ],
+          "clubroom.surprise_pitch": [
+            2
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "clue_chain_started",
+          "festival_plan",
+          "haruhi_calmed",
+          "truth_shared"
+        ],
+        "recent_choices": [
+          "haruhi_calm_talk",
+          "nagato_archives",
+          "group_call_sync",
+          "surprise_pitch"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "surprise_pitch",
+        "timeslot": "afternoon"
+      },
+      "events": [],
+      "mutation_profile": {
+        "satisfaction_factor": 0.99,
+        "stability_factor": 1.0,
+        "clue_factor": 1.0
+      },
+      "ending_id": null
+    },
+    {
+      "before": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 2,
+        "timeslot_index": 1,
+        "loop_count": 2,
+        "satisfaction": 67,
+        "stability": 65,
+        "clue_points": 6,
+        "closed_space_count": 0,
+        "worldline_shift": 22,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 51,
+        "member_trust": {
+          "kyon": 59,
+          "yuki": 54,
+          "mikuru": 49,
+          "koizumi": 52
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.99,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 15,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 3,
+            "nagato": 2,
+            "truth": 3,
+            "koizumi": 1
+          },
+          "character_affinity": {
+            "haruhi": 55,
+            "nagato": 51,
+            "mikuru": 50,
+            "koizumi": 51,
+            "kyon": 51
+          },
+          "route_tension": 0
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1,
+          "nagato_archives": 1,
+          "group_call_sync": 1,
+          "surprise_pitch": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ],
+          "library.nagato_archives": [
+            0
+          ],
+          "home.group_call_sync": [
+            2
+          ],
+          "clubroom.surprise_pitch": [
+            2
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "clue_chain_started",
+          "festival_plan",
+          "haruhi_calmed",
+          "truth_shared"
+        ],
+        "recent_choices": [
+          "haruhi_calm_talk",
+          "nagato_archives",
+          "group_call_sync",
+          "surprise_pitch"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "surprise_pitch",
+        "timeslot": "afternoon"
+      },
+      "after": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 2,
+        "timeslot_index": 2,
+        "loop_count": 2,
+        "satisfaction": 66,
+        "stability": 66,
+        "clue_points": 8,
+        "closed_space_count": 0,
+        "worldline_shift": 24,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 51,
+        "member_trust": {
+          "kyon": 59,
+          "yuki": 54,
+          "mikuru": 49,
+          "koizumi": 52
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.99,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 15,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 3,
+            "nagato": 2,
+            "truth": 4,
+            "koizumi": 3
+          },
+          "character_affinity": {
+            "haruhi": 55,
+            "nagato": 51,
+            "mikuru": 50,
+            "koizumi": 53,
+            "kyon": 51
+          },
+          "route_tension": 0
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1,
+          "nagato_archives": 1,
+          "group_call_sync": 1,
+          "surprise_pitch": 1,
+          "koizumi_debrief": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ],
+          "library.nagato_archives": [
+            0
+          ],
+          "home.group_call_sync": [
+            2
+          ],
+          "clubroom.surprise_pitch": [
+            2
+          ],
+          "city.koizumi_debrief": [
+            1
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "clue_chain_started",
+          "festival_plan",
+          "haruhi_calmed",
+          "truth_shared"
+        ],
+        "recent_choices": [
+          "haruhi_calm_talk",
+          "nagato_archives",
+          "group_call_sync",
+          "surprise_pitch",
+          "koizumi_debrief"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "koizumi_debrief",
+        "timeslot": "evening"
+      },
+      "events": [
+        "协同不足导致同步失效：团员协同不足，同步真相并未形成稳定合力。"
+      ],
+      "mutation_profile": {
+        "satisfaction_factor": 0.99,
+        "stability_factor": 1.0,
+        "clue_factor": 1.0
+      },
+      "ending_id": null
+    },
+    {
+      "before": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 2,
+        "timeslot_index": 2,
+        "loop_count": 2,
+        "satisfaction": 66,
+        "stability": 66,
+        "clue_points": 8,
+        "closed_space_count": 0,
+        "worldline_shift": 24,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 51,
+        "member_trust": {
+          "kyon": 59,
+          "yuki": 54,
+          "mikuru": 49,
+          "koizumi": 52
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.99,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 15,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 3,
+            "nagato": 2,
+            "truth": 4,
+            "koizumi": 3
+          },
+          "character_affinity": {
+            "haruhi": 55,
+            "nagato": 51,
+            "mikuru": 50,
+            "koizumi": 53,
+            "kyon": 51
+          },
+          "route_tension": 0
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1,
+          "nagato_archives": 1,
+          "group_call_sync": 1,
+          "surprise_pitch": 1,
+          "koizumi_debrief": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ],
+          "library.nagato_archives": [
+            0
+          ],
+          "home.group_call_sync": [
+            2
+          ],
+          "clubroom.surprise_pitch": [
+            2
+          ],
+          "city.koizumi_debrief": [
+            1
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "clue_chain_started",
+          "festival_plan",
+          "haruhi_calmed",
+          "truth_shared"
+        ],
+        "recent_choices": [
+          "haruhi_calm_talk",
+          "nagato_archives",
+          "group_call_sync",
+          "surprise_pitch",
+          "koizumi_debrief"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "koizumi_debrief",
+        "timeslot": "evening"
+      },
+      "after": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 3,
+        "timeslot_index": 0,
+        "loop_count": 3,
+        "satisfaction": 63,
+        "stability": 57,
+        "clue_points": 10,
+        "closed_space_count": 0,
+        "worldline_shift": 30,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 52,
+        "member_trust": {
+          "kyon": 60,
+          "yuki": 55,
+          "mikuru": 50,
+          "koizumi": 53
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.985,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 15,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 3,
+            "nagato": 2,
+            "truth": 7,
+            "koizumi": 3
+          },
+          "character_affinity": {
+            "haruhi": 56,
+            "nagato": 52,
+            "mikuru": 50,
+            "koizumi": 54,
+            "kyon": 51
+          },
+          "route_tension": 2
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1,
+          "nagato_archives": 1,
+          "group_call_sync": 1,
+          "surprise_pitch": 1,
+          "koizumi_debrief": 1,
+          "truth_discussion": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ],
+          "library.nagato_archives": [
+            0
+          ],
+          "home.group_call_sync": [
+            2
+          ],
+          "clubroom.surprise_pitch": [
+            2
+          ],
+          "city.koizumi_debrief": [
+            1
+          ],
+          "riverside.truth_discussion": [
+            2
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "clue_chain_started",
+          "festival_plan",
+          "haruhi_calmed",
+          "truth_shared"
+        ],
+        "recent_choices": [
+          "haruhi_calm_talk",
+          "nagato_archives",
+          "group_call_sync",
+          "surprise_pitch",
+          "koizumi_debrief",
+          "truth_discussion"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "truth_discussion",
+        "timeslot": "morning"
+      },
+      "events": [
+        "团员协同摩擦：信息同步受阻，部分成员仍对循环半信半疑。",
+        "一日将尽的摩擦余波：这一天又在未解的心结里结束。",
+        "协同不足导致同步失效：团员协同不足，同步真相并未形成稳定合力。",
+        "作业压力累积：夜色临近却仍未动笔，作业压力在团内蔓延。"
+      ],
+      "mutation_profile": {
+        "satisfaction_factor": 0.99,
+        "stability_factor": 1.0,
+        "clue_factor": 1.0
+      },
+      "ending_id": null
+    },
+    {
+      "before": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 3,
+        "timeslot_index": 0,
+        "loop_count": 3,
+        "satisfaction": 63,
+        "stability": 57,
+        "clue_points": 10,
+        "closed_space_count": 0,
+        "worldline_shift": 30,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 52,
+        "member_trust": {
+          "kyon": 60,
+          "yuki": 55,
+          "mikuru": 50,
+          "koizumi": 53
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.985,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 15,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 3,
+            "nagato": 2,
+            "truth": 7,
+            "koizumi": 3
+          },
+          "character_affinity": {
+            "haruhi": 56,
+            "nagato": 52,
+            "mikuru": 50,
+            "koizumi": 54,
+            "kyon": 51
+          },
+          "route_tension": 2
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1,
+          "nagato_archives": 1,
+          "group_call_sync": 1,
+          "surprise_pitch": 1,
+          "koizumi_debrief": 1,
+          "truth_discussion": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ],
+          "library.nagato_archives": [
+            0
+          ],
+          "home.group_call_sync": [
+            2
+          ],
+          "clubroom.surprise_pitch": [
+            2
+          ],
+          "city.koizumi_debrief": [
+            1
+          ],
+          "riverside.truth_discussion": [
+            2
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "clue_chain_started",
+          "festival_plan",
+          "haruhi_calmed",
+          "truth_shared"
+        ],
+        "recent_choices": [
+          "haruhi_calm_talk",
+          "nagato_archives",
+          "group_call_sync",
+          "surprise_pitch",
+          "koizumi_debrief",
+          "truth_discussion"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "truth_discussion",
+        "timeslot": "morning"
+      },
+      "after": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 3,
+        "timeslot_index": 1,
+        "loop_count": 3,
+        "satisfaction": 63,
+        "stability": 58,
+        "clue_points": 12,
+        "closed_space_count": 0,
+        "worldline_shift": 32,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 54,
+        "member_trust": {
+          "kyon": 61,
+          "yuki": 56,
+          "mikuru": 51,
+          "koizumi": 54
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.985,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 15,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 3,
+            "nagato": 2,
+            "truth": 8,
+            "koizumi": 3
+          },
+          "character_affinity": {
+            "haruhi": 56,
+            "nagato": 52,
+            "mikuru": 50,
+            "koizumi": 54,
+            "kyon": 52
+          },
+          "route_tension": 2
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1,
+          "nagato_archives": 1,
+          "group_call_sync": 1,
+          "surprise_pitch": 1,
+          "koizumi_debrief": 1,
+          "truth_discussion": 1,
+          "solo_trace": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ],
+          "library.nagato_archives": [
+            0
+          ],
+          "home.group_call_sync": [
+            2
+          ],
+          "clubroom.surprise_pitch": [
+            2
+          ],
+          "city.koizumi_debrief": [
+            1
+          ],
+          "riverside.truth_discussion": [
+            2
+          ],
+          "library.solo_trace": [
+            1
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "clue_chain_started",
+          "festival_plan",
+          "haruhi_calmed",
+          "truth_shared"
+        ],
+        "recent_choices": [
+          "haruhi_calm_talk",
+          "nagato_archives",
+          "group_call_sync",
+          "surprise_pitch",
+          "koizumi_debrief",
+          "truth_discussion",
+          "solo_trace"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "solo_trace",
+        "timeslot": "afternoon"
+      },
+      "events": [],
+      "mutation_profile": {
+        "satisfaction_factor": 0.985,
+        "stability_factor": 1.0,
+        "clue_factor": 1.0
+      },
+      "ending_id": null
+    },
+    {
+      "before": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 3,
+        "timeslot_index": 1,
+        "loop_count": 3,
+        "satisfaction": 63,
+        "stability": 58,
+        "clue_points": 12,
+        "closed_space_count": 0,
+        "worldline_shift": 32,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 54,
+        "member_trust": {
+          "kyon": 61,
+          "yuki": 56,
+          "mikuru": 51,
+          "koizumi": 54
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.985,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 15,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 3,
+            "nagato": 2,
+            "truth": 8,
+            "koizumi": 3
+          },
+          "character_affinity": {
+            "haruhi": 56,
+            "nagato": 52,
+            "mikuru": 50,
+            "koizumi": 54,
+            "kyon": 52
+          },
+          "route_tension": 2
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1,
+          "nagato_archives": 1,
+          "group_call_sync": 1,
+          "surprise_pitch": 1,
+          "koizumi_debrief": 1,
+          "truth_discussion": 1,
+          "solo_trace": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ],
+          "library.nagato_archives": [
+            0
+          ],
+          "home.group_call_sync": [
+            2
+          ],
+          "clubroom.surprise_pitch": [
+            2
+          ],
+          "city.koizumi_debrief": [
+            1
+          ],
+          "riverside.truth_discussion": [
+            2
+          ],
+          "library.solo_trace": [
+            1
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "clue_chain_started",
+          "festival_plan",
+          "haruhi_calmed",
+          "truth_shared"
+        ],
+        "recent_choices": [
+          "haruhi_calm_talk",
+          "nagato_archives",
+          "group_call_sync",
+          "surprise_pitch",
+          "koizumi_debrief",
+          "truth_discussion",
+          "solo_trace"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "solo_trace",
+        "timeslot": "afternoon"
+      },
+      "after": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 3,
+        "timeslot_index": 2,
+        "loop_count": 3,
+        "satisfaction": 62,
+        "stability": 59,
+        "clue_points": 14,
+        "closed_space_count": 0,
+        "worldline_shift": 34,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 54,
+        "member_trust": {
+          "kyon": 61,
+          "yuki": 56,
+          "mikuru": 51,
+          "koizumi": 54
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.985,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 15,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 3,
+            "nagato": 2,
+            "truth": 9,
+            "koizumi": 5
+          },
+          "character_affinity": {
+            "haruhi": 56,
+            "nagato": 52,
+            "mikuru": 50,
+            "koizumi": 56,
+            "kyon": 52
+          },
+          "route_tension": 2
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1,
+          "nagato_archives": 1,
+          "group_call_sync": 1,
+          "surprise_pitch": 1,
+          "koizumi_debrief": 2,
+          "truth_discussion": 1,
+          "solo_trace": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ],
+          "library.nagato_archives": [
+            0
+          ],
+          "home.group_call_sync": [
+            2
+          ],
+          "clubroom.surprise_pitch": [
+            2
+          ],
+          "city.koizumi_debrief": [
+            1,
+            1
+          ],
+          "riverside.truth_discussion": [
+            2
+          ],
+          "library.solo_trace": [
+            1
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "clue_chain_started",
+          "festival_plan",
+          "haruhi_calmed",
+          "truth_shared"
+        ],
+        "recent_choices": [
+          "haruhi_calm_talk",
+          "nagato_archives",
+          "group_call_sync",
+          "surprise_pitch",
+          "koizumi_debrief",
+          "truth_discussion",
+          "solo_trace",
+          "koizumi_debrief"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "koizumi_debrief",
+        "timeslot": "evening"
+      },
+      "events": [
+        "协同不足导致同步失效：团员协同不足，同步真相并未形成稳定合力。"
+      ],
+      "mutation_profile": {
+        "satisfaction_factor": 0.985,
+        "stability_factor": 1.0,
+        "clue_factor": 1.0
+      },
+      "ending_id": null
+    },
+    {
+      "before": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 3,
+        "timeslot_index": 2,
+        "loop_count": 3,
+        "satisfaction": 62,
+        "stability": 59,
+        "clue_points": 14,
+        "closed_space_count": 0,
+        "worldline_shift": 34,
+        "homework_progress": 0,
+        "homework_parts_done": [],
+        "crew_sync": 54,
+        "member_trust": {
+          "kyon": 61,
+          "yuki": 56,
+          "mikuru": 51,
+          "koizumi": 54
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.985,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 15,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 3,
+            "nagato": 2,
+            "truth": 9,
+            "koizumi": 5
+          },
+          "character_affinity": {
+            "haruhi": 56,
+            "nagato": 52,
+            "mikuru": 50,
+            "koizumi": 56,
+            "kyon": 52
+          },
+          "route_tension": 2
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1,
+          "nagato_archives": 1,
+          "group_call_sync": 1,
+          "surprise_pitch": 1,
+          "koizumi_debrief": 2,
+          "truth_discussion": 1,
+          "solo_trace": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ],
+          "library.nagato_archives": [
+            0
+          ],
+          "home.group_call_sync": [
+            2
+          ],
+          "clubroom.surprise_pitch": [
+            2
+          ],
+          "city.koizumi_debrief": [
+            1,
+            1
+          ],
+          "riverside.truth_discussion": [
+            2
+          ],
+          "library.solo_trace": [
+            1
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "clue_chain_started",
+          "festival_plan",
+          "haruhi_calmed",
+          "truth_shared"
+        ],
+        "recent_choices": [
+          "haruhi_calm_talk",
+          "nagato_archives",
+          "group_call_sync",
+          "surprise_pitch",
+          "koizumi_debrief",
+          "truth_discussion",
+          "solo_trace",
+          "koizumi_debrief"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "koizumi_debrief",
+        "timeslot": "evening"
+      },
+      "after": {
+        "run_id": "G007",
+        "schema_version": 2,
+        "day": 4,
+        "timeslot_index": 0,
+        "loop_count": 4,
+        "satisfaction": 62,
+        "stability": 64,
+        "clue_points": 15,
+        "closed_space_count": 0,
+        "worldline_shift": 36,
+        "homework_progress": 1,
+        "homework_parts_done": [
+          "worksheet"
+        ],
+        "crew_sync": 54,
+        "member_trust": {
+          "kyon": 61,
+          "yuki": 56,
+          "mikuru": 51,
+          "koizumi": 54
+        },
+        "closed_space_stage": 0,
+        "memory_residue": {
+          "clue_efficiency": 0,
+          "sync_recovery": 0
+        },
+        "mutator_mode": "deterministic",
+        "random_seed": 7,
+        "ai_temperature": 0.0,
+        "worldline_mutation_profile": {
+          "satisfaction_factor": 0.98,
+          "stability_factor": 1.0,
+          "clue_factor": 1.0
+        },
+        "nagato_fatigue": 15,
+        "route_state": {
+          "active_route": null,
+          "route_progress": {
+            "haruhi": 4,
+            "nagato": 2,
+            "truth": 9,
+            "koizumi": 5
+          },
+          "character_affinity": {
+            "haruhi": 56,
+            "nagato": 52,
+            "mikuru": 50,
+            "koizumi": 56,
+            "kyon": 52
+          },
+          "route_tension": 2
+        },
+        "scene_choice_counts": {
+          "haruhi_calm_talk": 1,
+          "nagato_archives": 1,
+          "group_call_sync": 1,
+          "surprise_pitch": 1,
+          "koizumi_debrief": 2,
+          "truth_discussion": 1,
+          "solo_trace": 1,
+          "homework_focus": 1
+        },
+        "scene_flavor_recent": {
+          "clubroom.haruhi_calm_talk": [
+            2
+          ],
+          "library.nagato_archives": [
+            0
+          ],
+          "home.group_call_sync": [
+            2
+          ],
+          "clubroom.surprise_pitch": [
+            2
+          ],
+          "city.koizumi_debrief": [
+            1,
+            1
+          ],
+          "riverside.truth_discussion": [
+            2
+          ],
+          "library.solo_trace": [
+            1
+          ],
+          "home.homework_focus": [
+            0
+          ]
+        },
+        "ending_id": null,
+        "ending_title": null,
+        "ending_epilogue": null,
+        "flags": [
+          "clue_chain_started",
+          "festival_plan",
+          "haruhi_calmed",
+          "truth_shared"
+        ],
+        "recent_choices": [
+          "nagato_archives",
+          "group_call_sync",
+          "surprise_pitch",
+          "koizumi_debrief",
+          "truth_discussion",
+          "solo_trace",
+          "koizumi_debrief",
+          "homework_focus"
+        ],
+        "current_choice_streak": 0,
+        "previous_choice": "homework_focus",
+        "timeslot": "morning"
+      },
+      "events": [
+        "作业进度推进：完成作业环节：习题演算。",
+        "一日将尽的摩擦余波：这一天又在未解的心结里结束。"
+      ],
+      "mutation_profile": {
+        "satisfaction_factor": 0.985,
+        "stability_factor": 1.0,
+        "clue_factor": 1.0
+      },
+      "ending_id": null
+    }
+  ],
+  "final_state": {
+    "run_id": "G007",
+    "schema_version": 2,
+    "day": 4,
+    "timeslot_index": 0,
+    "loop_count": 4,
+    "satisfaction": 62,
+    "stability": 64,
+    "clue_points": 15,
+    "closed_space_count": 0,
+    "worldline_shift": 36,
+    "homework_progress": 1,
+    "homework_parts_done": [
+      "worksheet"
+    ],
+    "crew_sync": 54,
+    "member_trust": {
+      "kyon": 61,
+      "yuki": 56,
+      "mikuru": 51,
+      "koizumi": 54
+    },
+    "closed_space_stage": 0,
+    "memory_residue": {
+      "clue_efficiency": 0,
+      "sync_recovery": 0
+    },
+    "mutator_mode": "deterministic",
+    "random_seed": 7,
+    "ai_temperature": 0.0,
+    "worldline_mutation_profile": {
+      "satisfaction_factor": 0.98,
+      "stability_factor": 1.0,
+      "clue_factor": 1.0
+    },
+    "nagato_fatigue": 15,
+    "route_state": {
+      "active_route": null,
+      "route_progress": {
+        "haruhi": 4,
+        "nagato": 2,
+        "truth": 9,
+        "koizumi": 5
+      },
+      "character_affinity": {
+        "haruhi": 56,
+        "nagato": 52,
+        "mikuru": 50,
+        "koizumi": 56,
+        "kyon": 52
+      },
+      "route_tension": 2
+    },
+    "scene_choice_counts": {
+      "haruhi_calm_talk": 1,
+      "nagato_archives": 1,
+      "group_call_sync": 1,
+      "surprise_pitch": 1,
+      "koizumi_debrief": 2,
+      "truth_discussion": 1,
+      "solo_trace": 1,
+      "homework_focus": 1
+    },
+    "scene_flavor_recent": {
+      "clubroom.haruhi_calm_talk": [
+        2
+      ],
+      "library.nagato_archives": [
+        0
+      ],
+      "home.group_call_sync": [
+        2
+      ],
+      "clubroom.surprise_pitch": [
+        2
+      ],
+      "city.koizumi_debrief": [
+        1,
+        1
+      ],
+      "riverside.truth_discussion": [
+        2
+      ],
+      "library.solo_trace": [
+        1
+      ],
+      "home.homework_focus": [
+        0
+      ]
+    },
+    "ending_id": null,
+    "ending_title": null,
+    "ending_epilogue": null,
+    "flags": [
+      "clue_chain_started",
+      "festival_plan",
+      "haruhi_calmed",
+      "truth_shared"
+    ],
+    "recent_choices": [
+      "nagato_archives",
+      "group_call_sync",
+      "surprise_pitch",
+      "koizumi_debrief",
+      "truth_discussion",
+      "solo_trace",
+      "koizumi_debrief",
+      "homework_focus"
+    ],
+    "current_choice_streak": 0,
+    "previous_choice": "homework_focus",
+    "timeslot": "morning"
+  }
+}
