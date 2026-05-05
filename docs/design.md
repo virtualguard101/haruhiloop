@@ -48,7 +48,22 @@
 
 同时保留历史模块路径（如 `play_app.py`、`view.py` 等）作为兼容层，保证脚本与测试平滑过渡。
 
-> 详细分层参考：`docs/arch.md`
+> 详细分层参考：`docs/dev/arch.md`
+
+### 3.1 仓库级目录结构
+
+```text
+.
+├─ docs/                          # 设计与研发文档
+├─ scripts/                       # 辅助脚本（如 golden 数据导出）
+├─ src/
+│  ├─ assets/                     # ASCII 资源
+│  └─ haruhiloop_cli/             # Python 主实现
+├─ tests/                         # Python 测试
+├─ web/                           # TypeScript Web 终端版
+├─ main.py                        # 本地启动辅助入口
+└─ pyproject.toml                 # Python 项目配置
+```
 
 ## 4. 玩法模型
 
