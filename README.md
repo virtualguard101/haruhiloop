@@ -27,7 +27,30 @@ The project now uses a staged layered architecture:
 - `infrastructure`: persistence adapters
 - `narrative`: i18n and narrative text resources
 
-See `docs/arch.md` for the full architecture reference.
+See `docs/dev/arch.md` for the full architecture reference.
+
+## Project structure
+
+```text
+.
+├─ docs/
+│  ├─ design.md
+│  └─ dev/
+│     ├─ arch.md
+│     ├─ action-flavor-memo.md
+│     └─ results.md
+├─ scripts/
+│  ├─ dump_golden.py
+│  └─ get_utf8art.sh
+├─ src/
+│  ├─ assets/                     # ascii resources
+│  └─ haruhiloop_cli/             # Python package (CLI/TUI + layered core)
+├─ tests/                         # Python test suite
+├─ web/                           # TypeScript web terminal port
+├─ main.py                        # local launcher helper
+├─ pyproject.toml
+└─ README_zh-CN.md
+```
 
 ## Gameplay model
 
