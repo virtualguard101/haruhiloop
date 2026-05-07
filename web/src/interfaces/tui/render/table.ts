@@ -1,6 +1,12 @@
-// 等宽表渲染（用于 metric / history）。
-// 风格类似 Rich Table：列宽在内容自然宽度与 totalWidth 之间自适应；
-// 单元格超过列宽时按可见宽度换行成多个物理行（保留外层 ANSI 包裹样式）。
+// 与 Rich Table 默认 box.HEAVY_HEAD 风格对齐：
+//   ┏━━━━━━━━━┳━━━━━━━━━┓     <- 顶（含标题，可选）
+//   ┃ Header  ┃ Header  ┃     <- 表头（重边 + 重列分隔）
+//   ┡━━━━━━━━━╇━━━━━━━━━┩     <- 表头下分隔（重转细）
+//   │ data    │ data    │     <- 数据行（细边 + 细列分隔）
+//   │ data    │ data    │
+//   └─────────┴─────────┘     <- 底（细线）
+// 这种"重头细身"的视觉与 Rich 输出完全一致；列宽自适应，
+// 单元格超列宽时按可见宽度换行成多个物理行（保留外层 ANSI 包裹样式）。
 
 import {
   isWide,
@@ -31,15 +37,14 @@ export interface TableOptions {
   borderColor?: string;
 }
 
-const SEP = " │ ";
-
 export function renderTable(opts: TableOptions, totalWidth: number): string[] {
   const cols = opts.columns;
   if (cols.length === 0) return [];
-  const sepTotal = SEP.length * (cols.length - 1);
-  // 整张表对齐到 totalWidth：
-  //   topFill = totalWidth - 2  （减去两端 ┏ ┓）
-  //   cellsBudget = totalWidth - 4 - sepTotal （减去两端边框 + 两侧 padding + 列分隔符）
+  const colCount = cols.length;
+  // 列分隔在表头是重列竖线 ┃（带左右 1 padding）= 3 cell
+  // 在数据行是细列竖线 │（带左右 1 padding）= 3 cell
+  // 两者占用宽度相同，按统一 sepTotal 计算。
+  const sepTotal = 3 * (colCount - 1);
   const topFill = Math.max(20, totalWidth - 2);
   const cellsBudget = Math.max(8, totalWidth - 4 - sepTotal);
 
@@ -78,7 +83,6 @@ export function renderTable(opts: TableOptions, totalWidth: number): string[] {
       widths[bestIdx] = (widths[bestIdx] ?? 0) - 1;
       sum -= 1;
     }
-    // 如仍超预算（例如某列 header 比预算还宽），强行截到 cellsBudget 内
     sum = widths.reduce((a, b) => a + b, 0);
     while (sum > cellsBudget) {
       let maxIdx = 0;
@@ -92,22 +96,25 @@ export function renderTable(opts: TableOptions, totalWidth: number): string[] {
   }
 
   const border = opts.borderColor ?? "white";
+  const titleColor = opts.titleColor ?? border;
   const open = style({ fg: border });
 
   const lines: string[] = [];
-  const titleStr = opts.title
-    ? wrap(opts.title, { fg: opts.titleColor ?? "default", bold: true })
-    : "";
-  lines.push(buildBorder("┏", "━", "┓", topFill, titleStr, open));
+  // 顶部：重线，含可选标题；列接驳点 ┳（在每一列结束位置之上）
+  lines.push(buildTopBorder(widths, topFill, opts.title, titleColor, open));
 
-  // 表头
+  // 表头：重边 ┃ + 重列分隔 ┃
   const headerCells = cols.map((c, i) =>
-    formatCell(wrap(c.header, { bold: true }), widths[i] ?? 0, c.align ?? "left"),
+    formatCell(wrap(c.header, { bold: true, fg: titleColor }), widths[i] ?? 0, c.align ?? "left"),
   );
-  lines.push(`${open}┃${RESET} ${headerCells.join(SEP)} ${open}┃${RESET}`);
-  lines.push(`${open}┠${"─".repeat(topFill)}┨${RESET}`);
+  const headerSep = `${open}┃${RESET}`;
+  lines.push(`${open}┃${RESET} ${headerCells.join(` ${headerSep} `)} ${open}┃${RESET}`);
 
-  // 数据行：每个 cell 按列宽换行成多个物理行
+  // 表头下分隔：重转细，列接驳点 ╇
+  lines.push(buildHeaderUnderline(widths, open));
+
+  // 数据行：细边 │ + 细列分隔 │
+  const rowSep = `${open}│${RESET}`;
   opts.rows.forEach((row, idx) => {
     const wrappedCells: string[][] = cols.map((_c, i) => {
       const w = widths[i] ?? 0;
@@ -121,22 +128,30 @@ export function renderTable(opts: TableOptions, totalWidth: number): string[] {
         const seg = wrappedCells[i]?.[li] ?? "";
         return formatCell(seg, widths[i] ?? 0, c.align ?? "left");
       });
-      let body = ` ${cells.join(SEP)} `;
+      let body = ` ${cells.join(` ${rowSep} `)} `;
       if (opts.highlightRow === idx) {
-        body = wrap(body, { reverse: true, bold: true });
+        // 高亮：整行 reverse + bold；外层边框颜色不变。
+        // 注意 cells.join 已经写入了 RESET，会打断 reverse；
+        // 重新构造：每个 cell 本体加 reverse，分隔符不加。
+        const wrappedCellsHL = cols.map((c, i) => {
+          const seg = wrappedCells[i]?.[li] ?? "";
+          const formatted = formatCell(seg, widths[i] ?? 0, c.align ?? "left");
+          return wrap(formatted, { reverse: true, bold: true });
+        });
+        body = ` ${wrappedCellsHL.join(` ${rowSep} `)} `;
       }
-      lines.push(`${open}┃${RESET}${body}${open}┃${RESET}`);
+      lines.push(`${open}│${RESET}${body}${open}│${RESET}`);
     }
   });
 
-  lines.push(`${open}┗${"━".repeat(topFill)}┛${RESET}`);
+  // 底部：细线
+  lines.push(`${open}└${"─".repeat(topFill)}┘${RESET}`);
   return lines;
 }
 
 function formatCell(value: string, width: number, align: "left" | "right"): string {
   const visible = visibleWidth(value);
   if (visible > width) {
-    // 已经是 wrapToWidth 之后的单段，超过表示 ANSI 复杂内容退化截断
     return sliceByVisibleWidth(value, width);
   }
   if (visible === width) return value;
@@ -149,23 +164,58 @@ function padLeftVisible(text: string, width: number): string {
   return " ".repeat(width - w) + text;
 }
 
-function buildBorder(
-  left: string,
-  fill: string,
-  right: string,
-  innerWidth: number,
-  title: string,
+// 顶部：重线 ━，列接驳点 ┳。
+// 标题居中嵌入顶边；过长则 fallback 到无标题（仍带列接驳点）。
+function buildTopBorder(
+  widths: number[],
+  innerFill: number,
+  title: string | undefined,
+  titleColor: string,
   open: string,
 ): string {
-  if (!title) {
-    return `${open}${left}${fill.repeat(innerWidth)}${right}${RESET}`;
+  // 先生成不带标题的"列接驳重线"
+  const segs: string[] = [];
+  widths.forEach((w, i) => {
+    // 每列对应可见 cell = padding(1) + width + padding(1) = w + 2
+    segs.push("━".repeat(w + 2));
+    if (i < widths.length - 1) segs.push("┳");
+  });
+  let plain = segs.join("");
+  // 兜底（widths 总和 + sep != innerFill 时；理论上相等，安全起见对齐）
+  if (visibleWidth(plain) < innerFill) {
+    plain += "━".repeat(innerFill - visibleWidth(plain));
+  } else if (visibleWidth(plain) > innerFill) {
+    plain = "━".repeat(innerFill);
   }
-  const titleVis = visibleWidth(title);
-  const titleSeg = ` ${title} `;
-  const remain = innerWidth - titleVis - 2;
-  const lpad = Math.max(2, Math.floor(remain / 2));
-  const rpad = Math.max(2, remain - lpad);
-  return `${open}${left}${fill.repeat(lpad)}${RESET}${titleSeg}${open}${fill.repeat(rpad)}${right}${RESET}`;
+  if (!title) {
+    return `${open}┏${plain}┓${RESET}`;
+  }
+  const titleStyled = wrap(` ${title} `, { fg: titleColor, bold: true });
+  const titleVis = visibleWidth(titleStyled);
+  const remain = innerFill - titleVis;
+  if (remain < 4) {
+    return `${open}┏${plain}┓${RESET}`;
+  }
+  // 在顶边中央嵌入标题：把 plain 拆成左右两段，中间塞标题
+  // 由于 plain 含 ┳ 接驳点，简单按可见宽度切，可能切到接驳点上 ——
+  // 视觉上 ┳ 被替换成 ━标题字符可接受，标题居中观感更接近 Rich。
+  const leftFill = 2;
+  const rightFill = remain - leftFill;
+  return (
+    `${open}┏${"━".repeat(leftFill)}${RESET}` +
+    `${titleStyled}` +
+    `${open}${"━".repeat(rightFill)}┓${RESET}`
+  );
 }
 
-void isWide; // 用于将来的 cell-internal 截断辅助
+// 表头下分隔：重→细的过渡线，列接驳点 ╇。
+function buildHeaderUnderline(widths: number[], open: string): string {
+  const segs: string[] = [];
+  widths.forEach((w, i) => {
+    segs.push("━".repeat(w + 2));
+    if (i < widths.length - 1) segs.push("╇");
+  });
+  return `${open}┡${segs.join("")}┩${RESET}`;
+}
+
+void isWide;

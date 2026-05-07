@@ -1,6 +1,8 @@
 // 与 play_app.py _entry_panel 视觉对齐：ASCII + SOS 团口号 + 4 项菜单。
+// Web 端额外做的：菜单宽度跟随 innerWidth 自适应、按键 chip 视觉与 help 一致、
+// 副标题分行排版减少视觉拥挤。
 
-import { centerInWidth, splitLines, wrap } from "./ansi";
+import { centerInWidth, splitLines, visibleWidth, wrap } from "./ansi";
 import { renderPanel } from "./panel";
 
 const FALLBACK_ASCII = [
@@ -27,6 +29,29 @@ export async function loadEntryAscii(): Promise<string> {
   }
 }
 
+// 动态构造一段居中装饰条："━━━━━ MAIN MENU ━━━━━"，让宽度跟随
+// innerWidth；这样窄/宽屏下不会出现"装饰条溢出"或"装饰条远短于面板"的视觉断层。
+function buildDeco(label: string, innerWidth: number): string {
+  const labelStyled = wrap(` ${label} `, { bold: true });
+  const labelVis = visibleWidth(labelStyled);
+  // 让装饰条总宽度大约占 innerWidth 的 70%（最少 28，最多 60）
+  const targetTotal = Math.min(60, Math.max(28, Math.floor(innerWidth * 0.7)));
+  const fill = Math.max(0, targetTotal - labelVis - 2);
+  const left = Math.floor(fill / 2);
+  const right = fill - left;
+  return (
+    wrap(`┏${"━".repeat(left)}`, { fg: "bright_cyan" }) +
+    labelStyled +
+    wrap(`${"━".repeat(right)}┓`, { fg: "bright_cyan" })
+  );
+}
+
+function buildDecoBottom(innerWidth: number): string {
+  // 与 buildDeco 顶端宽度对齐
+  const targetTotal = Math.min(60, Math.max(28, Math.floor(innerWidth * 0.7)));
+  return wrap("┗" + "━".repeat(Math.max(0, targetTotal - 2)) + "┛", { fg: "bright_cyan" });
+}
+
 export function renderEntryPanel(
   asciiArt: string,
   width: number,
@@ -34,29 +59,35 @@ export function renderEntryPanel(
 ): string[] {
   const innerWidth = Math.max(2, width - 4);
   const lines: string[] = [];
-  // viewport 较矮时只画一份 ASCII（去掉副 LOGO，省一半行数），
-  // 极矮（< 24）时连主 ASCII 也跳过，只留口号 + 菜单。
+  // viewport 较矮时只画一份 ASCII；极矮（< 24）时跳过 ASCII 只保留口号 + 菜单。
   const showSecondaryAscii = rows >= 50;
   const showPrimaryAscii = rows >= 24;
-  if (showPrimaryAscii) {
-    for (const raw of splitLines(asciiArt)) {
+  const primaryLines = splitLines(asciiArt);
+  const primaryMax = primaryLines.reduce((m, l) => Math.max(m, visibleWidth(l)), 0);
+  const fallbackMax = FALLBACK_ASCII.reduce((m, l) => Math.max(m, visibleWidth(l)), 0);
+  if (showPrimaryAscii && primaryMax <= innerWidth) {
+    for (const raw of primaryLines) {
       lines.push(centerInWidth(wrap(raw, { fg: "cyan" }), innerWidth));
     }
   }
-  if (showSecondaryAscii) {
+  if (showSecondaryAscii && fallbackMax <= innerWidth) {
+    if (lines.length > 0) lines.push("");
     for (const raw of FALLBACK_ASCII) {
-      lines.push(centerInWidth(wrap(raw, { fg: "cyan" }), innerWidth));
+      lines.push(centerInWidth(wrap(raw, { fg: "bright_cyan", bold: true }), innerWidth));
     }
   }
+  if (lines.length > 0) lines.push("");
+  // 主标题 + 装饰横条
   lines.push(centerInWidth(wrap("★ SOS 团 · 特别活动室终端 ★", { fg: "bright_yellow", bold: true }), innerWidth));
-  lines.push(centerInWidth(wrap("━━━━━━━━━━━━━━━━━━━━━━━━━━━━", { fg: "bright_blue" }), innerWidth));
-  lines.push(centerInWidth(wrap("无尽八月循环模拟器", { bold: true }), innerWidth));
+  lines.push(centerInWidth(wrap("━".repeat(Math.min(40, innerWidth - 2)), { fg: "bright_blue" }), innerWidth));
+  lines.push(centerInWidth(wrap("无尽八月循环模拟器", { bold: true, fg: "bright_white" }), innerWidth));
+  lines.push("");
   lines.push(centerInWidth(wrap("「ただの人間には興味ありません。」", { italic: true, fg: "bright_magenta" }), innerWidth));
-  lines.push(centerInWidth(wrap("如果你是外星人、未来人、异世界人或超能力者，就来找我吧。", { dim: true }), innerWidth));
+  lines.push(centerInWidth(wrap("如果你是外星人、未来人、异世界人或超能力者，就来找我吧。", { dim: true, italic: true }), innerWidth));
   lines.push("");
   // 菜单边框
-  const menuTop = `${wrap("┏━━━━━━━━━━", { fg: "bright_cyan" })}${wrap(" MAIN MENU ", { bold: true })}${wrap("━━━━━━━━━━┓", { fg: "bright_cyan" })}`;
-  lines.push(centerInWidth(menuTop, innerWidth));
+  lines.push(centerInWidth(buildDeco("MAIN MENU", innerWidth), innerWidth));
+  lines.push("");
   const menuItems = [
     [" 1 ", "bright_cyan", "开始新局", "NEW LOOP"],
     [" 2 ", "plum2", "载入存档", "LOAD GAME"],
@@ -65,14 +96,17 @@ export function renderEntryPanel(
   ] as const;
   for (const [tag, bg, label, en] of menuItems) {
     const item =
-      wrap(tag, { bg, fg: "black" }) +
-      " " +
+      wrap(tag, { bg, fg: "black", bold: true }) +
+      "  " +
       wrap(label, { bold: true, fg: "bright_white" }) +
-      " " +
+      "  " +
       wrap(en, { dim: true });
     lines.push(centerInWidth(item, innerWidth));
   }
-  lines.push(centerInWidth(wrap("┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛", { fg: "bright_cyan" }), innerWidth));
+  lines.push("");
+  lines.push(centerInWidth(buildDecoBottom(innerWidth), innerWidth));
+  lines.push("");
+  lines.push(centerInWidth(wrap("使用数字键 1–4 选择，或按 Enter 直接开始新局", { dim: true }), innerWidth));
   return renderPanel(lines.join("\n"), width, {
     title: "Haruhi Loop · Endless August",
     borderColor: "bright_cyan",
