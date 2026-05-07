@@ -1,5 +1,8 @@
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
+import { Unicode11Addon } from "@xterm/addon-unicode11";
+import { CanvasAddon } from "@xterm/addon-canvas";
+import { WebglAddon } from "@xterm/addon-webgl";
 
 import { TUIApp } from "./interfaces/tui/app";
 import { CliApp } from "./interfaces/cli/commands";
@@ -43,8 +46,11 @@ async function bootstrap(): Promise<void> {
   const term = new Terminal({
     theme: TERMINAL_THEME,
     fontFamily: '"JetBrains Mono","Cascadia Code","Source Han Sans CN",monospace',
-    fontSize: 14,
-    lineHeight: 1.15,
+    // 同视窗高度装更多行 —— textual 渲染的 entry 屏 ASCII art + 菜单
+    // 在 14pt/1.15 行高下需要 ~55 行，常见笔记本 viewport 高度装不下。
+    // 12pt/1.0 → 单行 ~13 px，1080p viewport 可显示 ~72 行（vs 原 ~52）。
+    fontSize: 12,
+    lineHeight: 1.0,
     letterSpacing: 0,
     cursorBlink: false,
     cursorStyle: "bar",
@@ -53,16 +59,61 @@ async function bootstrap(): Promise<void> {
     allowProposedApi: true,
     convertEol: false,
     macOptionIsMeta: true,
-    rendererType: "canvas",
-  } as ConstructorParameters<typeof Terminal>[0]);
+  });
 
   const fit = new FitAddon();
+  const unicode11 = new Unicode11Addon();
   term.loadAddon(fit);
+  term.loadAddon(unicode11);
+  // 把字符宽度判定切到 Unicode 11 表，覆盖更完整的 CJK / emoji /
+  // 半角片假名等范围，避免内部 cell 宽度估算与渲染列数不一致。
+  term.unicode.activeVersion = "11";
   term.open(host);
+
+  // 关键：xterm v5 默认 DOM 渲染会让浏览器自由排版字符，Chrome 在
+  // macOS 下 monospace fallback 到苹方等非严格等宽 CJK 字体，CJK
+  // glyph 实际像素宽 > 2 cell，会"挤"右侧字符（包括 ┃ 边框）。
+  // 改成 Canvas / WebGL 渲染：每个 cell 自己 fillRect 清屏后再画
+  // glyph，CJK 字符即使 metrics 超 cell 也不会污染相邻 cell。
+  // 优先 WebGL（性能 + 严格 cell），失败回退 Canvas。
+  let webglOK = false;
+  try {
+    const webgl = new WebglAddon();
+    webgl.onContextLoss(() => webgl.dispose());
+    term.loadAddon(webgl);
+    webglOK = true;
+  } catch {
+    webglOK = false;
+  }
+  if (!webglOK) {
+    try {
+      term.loadAddon(new CanvasAddon());
+    } catch {
+      // 最后兜底：保留默认 DOM 渲染。
+    }
+  }
+
   fit.fit();
-  window.addEventListener("resize", () => {
-    fit.fit();
-  });
+  // 拖动窗口期间 'resize' 事件每 ~16 ms 触发一次。每次 fit() 都会
+  // 计算字体度量并通知 onResize 链路 → 经 Pyodide → textual layout，
+  // 单次 ~30–80 ms。如果不防抖，会串成长链路阻塞 UI。
+  // 用 requestAnimationFrame 合并到下一帧 + 80 ms 末尾确保拖动结束的最终
+  // 尺寸一定生效（rAF 在 Chrome 拖动 resize 节流时可能延迟很久）。
+  let rafId: number | null = null;
+  let tailId: number | null = null;
+  const scheduleFit = () => {
+    if (rafId !== null) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      fit.fit();
+    });
+    if (tailId !== null) clearTimeout(tailId);
+    tailId = window.setTimeout(() => {
+      tailId = null;
+      fit.fit();
+    }, 80);
+  };
+  window.addEventListener("resize", scheduleFit);
 
   const mode = pickMode();
   if (mode === "cli") {

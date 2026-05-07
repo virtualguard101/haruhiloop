@@ -4,3 +4,8 @@ dist/
 *.log
 .DS_Store
 pnpm-lock.yaml
+
+# Python bundle 派生产物（由 scripts/build-python-bundle.sh 从父项目 src/
+# 和 .venv/ site-packages 打包而来；npm run dev / build 会自动重新生成）。
+# 手写的 driver.py / web_panels.py 不在此列，要进版本管理。
+public/python/*.zip
