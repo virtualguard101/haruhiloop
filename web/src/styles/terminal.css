@@ -21,7 +21,9 @@ body {
 #terminal {
   flex: 1 1 auto;
   min-height: 0;
-  padding: 8px 8px 0 8px;
+  /* 去掉 padding，让 xterm 占满整个 viewport：textual 自己渲染了 Header /
+     Footer / $accent 边框，再外加浏览器侧 padding 反而把可显示行数挤掉。 */
+  padding: 0;
 }
 
 #terminal .xterm,
@@ -29,37 +31,31 @@ body {
   background: #1e1e2e !important;
 }
 
+/* HUD：单行底部提示。textual 的 Header / Footer 已经覆盖了 mode / clock /
+   按键 hint，HUD 这里只用来给浏览器使用者一句"如何获得最佳显示"的提示。 */
 #hud {
   flex: 0 0 auto;
   display: flex;
-  gap: 24px;
+  justify-content: center;
   align-items: center;
   background: #181825;
   border-top: 1px solid #313244;
-  padding: 4px 12px;
-  font-size: 12px;
+  padding: 3px 8px;
+  font-size: 11px;
+  line-height: 1.2;
   color: #a6adc8;
+  letter-spacing: 0.4px;
   user-select: none;
 }
 
-#hud-title {
-  font-weight: bold;
-  color: #cba6f7;
-  letter-spacing: 1px;
+#hud-tip {
+  color: #f9e2af; /* 与 textual $accent 黄边框呼应 */
+  font-weight: 500;
 }
 
-#hud-mode {
-  color: #f9e2af;
-}
-
-#hud-clock {
-  color: #94e2d5;
-  margin-left: auto;
-}
-
-#hud-keys {
-  color: #6c7086;
-  font-size: 11px;
+#hud-tip::before {
+  content: "▸ ";
+  color: #fab387;
 }
 
 .xterm-cursor-layer {

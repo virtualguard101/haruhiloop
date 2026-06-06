@@ -12,10 +12,12 @@
     <div id="app">
       <div id="terminal"></div>
       <div id="hud">
-        <span id="hud-title">HARUHI LOOP</span>
-        <span id="hud-clock">--:--:--</span>
-        <span id="hud-mode">PLAY</span>
-        <span id="hud-keys">数字/Enter/r/n/v/h/q</span>
+        <!-- hud-clock / hud-mode 由 main.ts 通过 getElementById 取引用，
+             保留 DOM 节点（CSS 隐藏不显示），避免改 ts 端的强制断言。
+             实际 mode / clock 已经由 textual 的 Header 渲染在终端里。 -->
+        <span id="hud-clock" hidden></span>
+        <span id="hud-mode" hidden></span>
+        <span id="hud-tip">请将浏览器高度调至最高，并留适当宽度以确保显示效果</span>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>

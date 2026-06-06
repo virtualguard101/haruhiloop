@@ -91,24 +91,24 @@ const ENTRIES: ReadonlyArray<{ idx: string; title: string; lines: string[] }> = 
 
 export function renderCheatPanel(width: number): string[] {
   const lines: string[] = [
-    wrap("当前版本结局条件", { bold: true }) +
-      "（场景+选项驱动；判定自上而下，先命中先结算）",
+    wrap("当前版本结局条件", { bold: true, fg: "bright_yellow" }) +
+      wrap("（场景+选项驱动；判定自上而下，先命中先结算）", { dim: true }),
     "",
   ];
   for (const e of ENTRIES) {
-    lines.push(
-      wrap(`${e.idx}.`, { bold: true, fg: "cyan" }) +
-        " " +
-        wrap(e.title, { bold: true }),
-    );
-    for (const l of e.lines) lines.push(`  ${l}`);
+    const tag = wrap(` ${e.idx} `, { bg: "bright_yellow", fg: "black", bold: true });
+    lines.push(`${tag} ${wrap(e.title, { bold: true, fg: "bright_white" })}`);
+    for (const l of e.lines) {
+      // 给每条要求行加左侧"·"竖向引导
+      lines.push(`   ${wrap("·", { fg: "yellow" })} ${wrap(l.replace(/^·\s*/, ""), { dim: true })}`);
+    }
     lines.push("");
   }
-  lines.push(wrap("叙事为原创向群像寓言，不必对应单一原作剧情。", { dim: true }));
+  lines.push(wrap("叙事为原创向群像寓言，不必对应单一原作剧情。", { dim: true, italic: true }));
   lines.push(wrap("按任意键关闭。", { dim: true }));
   return renderPanel(lines.join("\n"), width, {
     title: "Haruhi Loop · 结局条件速查",
     borderColor: "yellow",
-    titleColor: "yellow",
+    titleColor: "bright_yellow",
   });
 }
